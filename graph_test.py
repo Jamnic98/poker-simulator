@@ -28,5 +28,13 @@ bar.plot()
 # plt.ylabel('Y Values')
 
 # # save graph as image
-graph_img_output_dir = path.join(config['IMG_DIR'], 'graphs', 'test_plot_4.png')
-plt.savefig(graph_img_output_dir)
+import os
+
+plot_file_name = 'test_plot_4.png'
+
+graph_img_output_dir = path.join(config['IMG_DIR'], 'graphs')
+
+if not os.path.exists(graph_img_output_dir):
+    os.makedirs(graph_img_output_dir)
+    
+plt.savefig(os.path.join(graph_img_output_dir, plot_file_name))
