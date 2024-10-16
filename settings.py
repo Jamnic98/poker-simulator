@@ -4,5 +4,5 @@ from os import getcwd, path
 matplotlib.use('Agg')
 
 config = {
-    "IMG_DIR": path.join(getcwd(), 'images')
+    "GRAPH_OUTPUT_DIR": path.join(getcwd(), 'graphs')
 }

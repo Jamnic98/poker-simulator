@@ -1,6 +1,6 @@
 from random import shuffle
 
-faces = ['J', 'Q', 'K']
+faces = ['J', 'Q', 'K', 'A']
 suits = ['C', 'D', 'H', 'S']
 
 
@@ -11,18 +11,13 @@ class Deck:
     def generate_deck(self):
         deck = []
         for suit in suits:
-            for i, v in enumerate([str(_) for _ in range(1, 11)] + faces):
-                if i != 0:
-                    card = v + suit
+            for index, value in enumerate([str(i) for i in range(1, 11)] + faces):
+                if index != 0:
+                    card = value + suit
                     deck.append(card)
-
 
         return deck
         
     def shuffle(self):
+        # shuffle cards in place
         shuffle(self.cards)
-
-
-
-deck = Deck()
-print(deck)

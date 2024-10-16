@@ -14,8 +14,6 @@ class AI(Player):
     def make_move(self):
         pass
 
-class DummyPlayer:
+class Dummy:
     def __init__(self):
         super().__init__()
-
-

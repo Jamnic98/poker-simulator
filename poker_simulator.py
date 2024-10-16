@@ -1,6 +1,7 @@
 from player import Player
 
-PLAYER_COUNT=6
+
+PLAYER_COUNT = 6
 
 class PokerSimulator:
     def __init__(self, player_count: int=PLAYER_COUNT):
@@ -13,10 +14,10 @@ class PokerSimulator:
         pass
 
     def run(self):
-        self.running = True
-        while self.running:
-            pass
+        pass
+        # self.running = True
+        # while self.running:
+        #     pass
             
-    def __graph__data(self):
+    def output_to_graph(self):
        pass
-
