@@ -21,3 +21,7 @@ class Deck:
     def shuffle(self):
         # shuffle cards in place
         shuffle(self.cards)
+
+# deck = Deck()
+# deck.shuffle()
+# print(len(deck.cards))
