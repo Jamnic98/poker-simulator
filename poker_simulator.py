@@ -7,7 +7,7 @@ class PokerSimulator:
         self.player_count = player_count
         # init starting conditions
         # init players
-        # init deck
+        # init cards
         # init graphing
         pass
 

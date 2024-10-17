@@ -1,27 +1,23 @@
 from random import shuffle
 
-faces = ['J', 'Q', 'K', 'A']
-suits = ['C', 'D', 'H', 'S']
+FACES = ['J', 'Q', 'K', 'A']
+SUITS = ['C', 'D', 'H', 'S']
 
 
 class Deck:
     def __init__(self):
-        self.cards = self.generate_deck()
+        self.cards = self.generate_cards()
 
-    def generate_deck(self):
-        deck = []
-        for suit in suits:
-            for index, value in enumerate([str(i) for i in range(1, 11)] + faces):
+    @staticmethod
+    def generate_cards():
+        cards = []
+        for suit in SUITS:
+            for index, value in enumerate([str(i) for i in range(1, 11)] + FACES):
                 if index != 0:
                     card = value + suit
-                    deck.append(card)
-
-        return deck
+                    cards.append(card)
+        return cards
         
     def shuffle(self):
         # shuffle cards in place
         shuffle(self.cards)
-
-# deck = Deck()
-# deck.shuffle()
-# print(len(deck.cards))

@@ -1,4 +1,3 @@
-from settings import config
 from poker_simulator import PokerSimulator
 
 

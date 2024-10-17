@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from utils.graph import save_plot
-from settings import config
+# from utils.graph import save_plot
+# from settings import config
 
 # create the graph
 x = np.arange(1, 10)
@@ -21,5 +21,4 @@ plt.title('Graph')
 plt.xlabel('X')
 plt.ylabel('Y')
 # plt.show()
-
-save_plot('test_plot')
+# save_plot('custom_plot')

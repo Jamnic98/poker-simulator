@@ -11,6 +11,9 @@ pandas==2.2.2
 pillow==10.4.0
 pluggy==1.5.0
 pyparsing==3.1.4
+PyQt6==6.7.1
+PyQt6-Qt6==6.7.3
+PyQt6_sip==13.8.0
 pytest==8.3.3
 python-dateutil==2.9.0.post0
 pytz==2024.2
@@ -19,4 +22,5 @@ scipy==1.14.1
 seaborn==0.13.2
 six==1.16.0
 threadpoolctl==3.5.0
+treys==0.1.8
 tzdata==2024.1
