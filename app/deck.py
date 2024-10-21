@@ -1,8 +1,6 @@
 from random import shuffle
-
-FACES = ['J', 'Q', 'K', 'A']
-SUITS = ['C', 'D', 'H', 'S']
-
+from card import Card
+from utils.constants import FACES, SUITS
 
 class Deck:
     def __init__(self):
@@ -19,5 +17,5 @@ class Deck:
         return cards
         
     def shuffle(self):
-        # shuffle cards in place
+        """ shuffles cards in place """
         shuffle(self.cards)

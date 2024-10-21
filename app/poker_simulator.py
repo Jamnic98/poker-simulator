@@ -12,10 +12,11 @@ class PokerSimulator:
         pass
 
     def run(self):
-        pass
+        # deal
+        self.graph_results()
         # self.running = True
         # while self.running:
         #     pass
             
-    def output_to_graph(self):
+    def graph_results(self):
        pass
