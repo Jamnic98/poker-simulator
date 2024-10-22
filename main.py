@@ -1,4 +1,4 @@
-from poker_simulator import PokerSimulator
+from app.poker_simulator import PokerSimulator
 from app.utils.constants import PLAYER_COUNT
 
 
