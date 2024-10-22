@@ -1,4 +1,3 @@
-from random import shuffle
 from typing import List
 from card import Card
 from utils.constants import FACES, SUITS
@@ -17,6 +16,9 @@ class Deck:
                     cards.append(card)
         return cards
 
-    def shuffle(self) -> None:
-        """ shuffles cards in place """
-        shuffle(self.cards)
+    # def shuffle(self) -> None:
+    #     """ shuffles cards in place """
+    #     shuffle(self.cards)
+
+    # def reset(self):
+    #     self.cards = self.generate_cards()
