@@ -1,4 +1,4 @@
-from player import Player
+# from player import Player
 
 
 class PokerSimulator:
@@ -9,14 +9,12 @@ class PokerSimulator:
         # init players
         # init cards
         # init graphing
-        pass
 
     def run(self):
         # deal
         self.graph_results()
         # self.running = True
         # while self.running:
-        #     pass
-            
+
     def graph_results(self):
-       pass
+        pass

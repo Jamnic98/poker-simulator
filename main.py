@@ -1,7 +1,6 @@
 from poker_simulator import PokerSimulator
+from app.utils.constants import PLAYER_COUNT
 
-
-PLAYER_COUNT = 2
 
 def main():
     poker_simulator = PokerSimulator(player_count=PLAYER_COUNT)

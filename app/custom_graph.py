@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
+# import seaborn as sns
 # from utils.graph import save_plot
 # from settings import config
 
@@ -13,8 +13,8 @@ data = pd.DataFrame({
     'y': y
 })
 
-bar = sns.barplot(x=x, y=y)
-bar.plot()
+# bar = sns.barplot(x=x, y=y)
+# bar.plot()
 
 # plt.plot(data['x'], data['y'])
 plt.title('Graph')

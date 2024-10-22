@@ -39,3 +39,5 @@ CARD_SUIT_NAME_MAP = {
 
 FACES = ['J', 'Q', 'K', 'A']
 SUITS = ['C', 'D', 'H', 'S']
+
+PLAYER_COUNT = 2
