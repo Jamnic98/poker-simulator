@@ -1,4 +1,4 @@
-from deck import Deck, FACES, SUITS
+from app.deck import Deck, FACES, SUITS
 
 
 def test_generate_cards():
@@ -14,8 +14,10 @@ def test_generate_cards():
         faces.append(card.face)
         suits.append(card.suit)
 
+    # test for the correct number of occurrences for each face
     for face in FACES:
         assert [card.face for card in generated_cards].count(face) == 4
 
+    # test for the correct number of occurrences for each suit
     for suit in SUITS:
         assert [card.suit for card in generated_cards].count(suit) == 13

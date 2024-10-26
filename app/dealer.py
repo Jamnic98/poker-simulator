@@ -1,7 +1,8 @@
 from random import shuffle
 from typing import List
-from deck import Deck
-from player import Player
+from app.board import Board
+from app.deck import Deck
+from app.player import DummyPlayer
 
 
 class Dealer:
@@ -11,13 +12,14 @@ class Dealer:
     def shuffle_cards(self):
         shuffle(self.deck.cards)
 
-    def pass_button(self):
-        pass
+    def deal_starting_cards(self, players: List[DummyPlayer]) -> None:
+        for _ in range(2):
+            for player in players:
+                player.pocket.append(self.deck.cards.pop())
 
-    def deal_starting_cards(self, players: List[Player]):
-        pass
-        # for player in players:
-        #     player.hand
+    def deal_flop(self, board: Board)  -> None:
+        flop_cards = [self.deck.cards.pop() for _ in range(3)]
+        board.cards.extend(flop_cards)
 
-    def deal_flop(self):
-        return [self.deck.cards.pop() for _ in range(3)]
+    def deal_turn_or_river(self, board) -> None:
+        board.cards.extend([self.deck.cards.pop()])

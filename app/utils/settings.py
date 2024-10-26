@@ -1,6 +1,7 @@
 from os import getcwd, path
 from matplotlib import use
 
+
 use('Agg')
 
 config = {

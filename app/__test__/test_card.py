@@ -1,4 +1,4 @@
-from card import Card
+from app.card import Card
 
 def test_card():
     card = Card('JH')

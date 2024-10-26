@@ -1,26 +1,44 @@
-from dealer import Dealer
-from player import Player
+from typing import List
+from pandas import DataFrame
+from app.board import Board
+from app.dealer import Dealer
+from app.player import DummyPlayer
+from app.utils.enums import Mode
+from app.utils.constants import DEFAULT_RUN_COUNT
 
 
 class PokerSimulator:
-    def __init__(self, player_count):
+    def __init__(self, mode: Mode, player_count: int):
+        self.mode = mode
         self.running = False
+        self.board = Board()
         self.dealer = Dealer()
         self.players = self.__set_players(player_count)
-        # init cards
-        # init graphing
 
-    def run(self):
-        self.dealer.shuffle_cards()
-        # self.deck.shuffle()
-        # deal cards
+    def __set_players(self, player_count: int) -> List[DummyPlayer]:
+        if self.mode == Mode.PREFLOP_SIM:
+            return [DummyPlayer() for _ in range(player_count)]
+        return []
 
-        self.__graph_results()
-        # self.running = True
-        # while self.running:
+    def __run_preflop_sim(self, n_runs: int) -> None:
+        data = []
+        for _ in range(n_runs):
+            # shuffle and deal pre-flop cards to players
+            self.dealer.shuffle_cards()
+            self.dealer.deal_starting_cards(self.players)
+            # deal flop, turn and river
+            self.dealer.deal_flop(self.board)
+            self.dealer.deal_turn_or_river(self.board)
+            self.dealer.deal_turn_or_river(self.board)
+            # decide winning hand
 
-    def __graph_results(self):
-        pass
+        self.__graph_results(data)
 
-    def __set_players(self, player_count: int):
-        return [Player() for _ in range(player_count)]
+    def __graph_results(self, data: DataFrame) -> None:
+        print('generating graph...')
+        print(data)
+
+    def run(self) -> None:
+        self.running = True
+        if self.mode == Mode.PREFLOP_SIM:
+            self.__run_preflop_sim(n_runs=DEFAULT_RUN_COUNT)
