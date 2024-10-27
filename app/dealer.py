@@ -17,9 +17,12 @@ class Dealer:
             for player in players:
                 player.pocket.append(self.deck.cards.pop())
 
-    def deal_flop(self, board: Board)  -> None:
+    def deal_flop(self, board: Board) -> None:
         flop_cards = [self.deck.cards.pop() for _ in range(3)]
         board.cards.extend(flop_cards)
 
     def deal_turn_or_river(self, board) -> None:
         board.cards.extend([self.deck.cards.pop()])
+
+    def reset(self):
+        self.deck.reset()

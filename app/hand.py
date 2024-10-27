@@ -1,3 +1,3 @@
 class Hand:
-    def __new__(cls):
-        return []
+    def __init__(self):
+        self.cards = []

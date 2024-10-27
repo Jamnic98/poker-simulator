@@ -4,13 +4,15 @@ from app.card import Card
 
 class DummyPlayer:
     def __init__(self):
-        self.pocket: List[Card] = []
-        self.is_current_player: bool = False
-        self.has_button: bool= False
+        self.pocket: List[Card]=[]
+        self.is_current_player: bool=False
+        self.has_button: bool=False
 
     def make_move(self):
         pass
 
+    def reset(self):
+        self.pocket.clear()
 
 # class Player(DummyPlayer):
 #     def make_move(self):
