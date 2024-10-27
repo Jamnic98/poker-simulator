@@ -22,7 +22,7 @@ class PokerSimulator:
 
     def __run_preflop_sim(self, n_runs: int) -> None:
         data = []
-        for _ in range(n_runs):
+        for i in range(n_runs):
             # shuffle and deal pre-flop cards to players
             self.dealer.shuffle_cards()
             self.dealer.deal_starting_cards(self.players)
@@ -31,6 +31,10 @@ class PokerSimulator:
             self.dealer.deal_turn_or_river(self.board)
             self.dealer.deal_turn_or_river(self.board)
             # decide winning hand
+            # reset
+            self.dealer.deck.reset()
+            self.board.reset()
+            print(f'run {i+1}')
 
         self.__graph_results(data)
 
@@ -40,5 +44,7 @@ class PokerSimulator:
 
     def run(self) -> None:
         self.running = True
-        if self.mode == Mode.PREFLOP_SIM:
-            self.__run_preflop_sim(n_runs=DEFAULT_RUN_COUNT)
+        while self.running:
+            if self.mode == Mode.PREFLOP_SIM:
+                self.__run_preflop_sim(n_runs=DEFAULT_RUN_COUNT)
+                self.running = False

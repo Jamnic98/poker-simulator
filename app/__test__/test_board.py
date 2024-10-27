@@ -21,5 +21,5 @@ def test_clear_board():
     board = Board()
     board.cards.extend([Card('A2'), Card('A3'), Card('A4')])
     assert len(board.cards) == 3
-    board.cards.clear()
+    board.reset()
     assert len(board.cards) == 0
