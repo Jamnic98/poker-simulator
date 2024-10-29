@@ -1,3 +1,13 @@
+from typing import List
+from app.card import Card
+
+
 class Hand:
     def __init__(self):
         self.cards = []
+        self.win_percentage = 0
+        self.tie_percentage = 0
+        self.best_hand = None
+
+    def add_cards_to_hand(self, cards: List[Card]) -> None:
+        self.cards.extend(cards)

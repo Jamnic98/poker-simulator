@@ -1,3 +1,6 @@
+DEFAULT_PLAYER_COUNT = 2
+DEFAULT_RUN_COUNT = 5
+
 CARD_FACE_VALUE_MAP = {
     '2': 2,
     '3': 3,
@@ -39,6 +42,3 @@ CARD_SUIT_NAME_MAP = {
 
 FACES = ['J', 'Q', 'K', 'A']
 SUITS = ['C', 'D', 'H', 'S']
-
-PLAYER_COUNT = 3
-DEFAULT_RUN_COUNT = 5
