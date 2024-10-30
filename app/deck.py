@@ -1,14 +1,15 @@
 from typing import List
+from random import shuffle  #, sample
 from app.card import Card
 from app.utils.constants import FACES, SUITS
 
 
 class Deck:
     def __init__(self):
-        self.cards = self.generate_cards()
+        self.cards = self.__generate_cards()
 
     @staticmethod
-    def generate_cards() -> List:
+    def __generate_cards() -> List[Card]:
         cards = []
         for suit in SUITS:
             for index, value in enumerate([str(i) for i in range(1, 11)] + FACES):
@@ -17,5 +18,8 @@ class Deck:
                     cards.append(card)
         return cards
 
+    def shuffle(self):
+        shuffle(self.cards)
+
     def reset(self):
-        self.cards = self.generate_cards()
+        self.cards = self.__generate_cards()

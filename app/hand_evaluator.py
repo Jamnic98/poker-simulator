@@ -1,17 +1,18 @@
 from typing import List
 from app.board import Board
+from app.deck import Deck
+from app.hand import Hand
 from app.player import DummyPlayer
 
 
 class HandEvaluator:
-    def __init__(self, board: Board, players: List[DummyPlayer]):
-        self.board = board
-        self.players = players
-
-    def evaluate_hands(self):
-        # for player in self.players:
-            # print(player.pocket)
+    def __init__(self):
         pass
 
-    def get_best_made_hand(self):
-        pass
+    def rank_hands(self, board: Board, deck: Deck, players: List[DummyPlayer]) -> List[Hand]:
+        deck.shuffle()
+        hand = Hand(players[0].pocket.copy().extend(board))
+        return [hand]
+
+    def get_best_made_hand(self, hand: Hand):
+        return hand

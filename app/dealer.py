@@ -1,4 +1,3 @@
-from random import shuffle
 from typing import List
 from app.board import Board
 from app.deck import Deck
@@ -10,7 +9,7 @@ class Dealer:
         self.deck = Deck()
 
     def shuffle_cards(self):
-        shuffle(self.deck.cards)
+        self.deck.shuffle()
 
     def deal_starting_cards(self, players: List[DummyPlayer]) -> None:
         for _ in range(2):

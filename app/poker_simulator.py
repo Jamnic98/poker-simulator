@@ -2,7 +2,8 @@ from typing import List
 # from pandas import DataFrame
 from app.board import Board
 from app.dealer import Dealer
-from app.graph import Graph
+# from app.graph import Graph
+from app.hand_evaluator import HandEvaluator
 from app.player import DummyPlayer
 from app.utils.enums import Mode
 from app.utils.constants import DEFAULT_RUN_COUNT
@@ -14,6 +15,7 @@ class PokerSimulator:
         self.players: List[DummyPlayer] = self.__set_players(player_count)
         self.board: Board = Board()
         self.dealer: Dealer = Dealer()
+        self.hand_evaluator = HandEvaluator()
         self.run_count: int = 0
         self.running: bool = False
 
@@ -23,6 +25,7 @@ class PokerSimulator:
             f'Board: {self.board}\n'
 
     def __set_players(self, player_count: int) -> List[DummyPlayer]:
+        """ initiates the players """
         if self.mode == Mode.PREFLOP_SIM:
             return [DummyPlayer() for _ in range(player_count)]
         return []
@@ -39,17 +42,13 @@ class PokerSimulator:
             self.dealer.deal_turn_or_river(self.board)
             self.dealer.deal_turn_or_river(self.board)
             # decide and assign winning hand
-            # self.__decide_winning_hand(self.board, self.players)
-            # update winning hand data
-            # reset
+            # self.__decide_winning_hand(self.board, self.dealer, self.players)
             print(self)
+            # update winning hand data
             self.__reset_game_state()
 
-        self.__graph_results()
+        # self.__graph_results()
         self.running = False
-
-    # def __decide_winning_hand(self, board: Board, players: List[DummyPlayer]):
-    #     pass
 
     def __reset_game_state(self) -> None:
         """ resets the game state at the end of a play """
@@ -58,12 +57,16 @@ class PokerSimulator:
         self.board.reset()
         self.dealer.reset()
 
-    def __graph_results(self) -> None:
-        # TODO: implement graphing
-        """ graphs the winning hand data """ 
-        graph = Graph(title='test')
-        graph.show()
-        # graph.save_plot('test_plot')
+    # TODO: implement graphing
+    # def __graph_results(self) -> None:
+    #     """ graphs the winning hand data """
+    #     graph = Graph(title='Graph')
+    #     graph.show()
+    # graph.save_plot(plot_name='example_plot')
+
+    # def __decide_winning_hand(self) -> None:
+    #     TODO: implement
+    #     ranked_hands = self.hand_evaluator.rank_hands(self.board, self.dealer, self.players)
 
     def __reset(self) -> None:
         """ resets the poker_sim """
