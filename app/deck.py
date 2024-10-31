@@ -18,6 +18,33 @@ class Deck:
                     cards.append(card)
         return cards
 
+    def get_royal_flush(self) -> List[Card]:
+        return self.cards
+
+    def get_straight_flush(self) -> List[Card]:
+        return self.cards
+
+    def get_four_of_a_kind(self) -> List[Card]:
+        return self.cards
+
+    def get_full_house(self) -> List[Card]:
+        return self.cards
+
+    def get_flush(self) -> List[Card]:
+        return self.cards
+
+    def get_straight(self) -> List[Card]:
+        return self.cards
+
+    def get_three_of_a_kind(self) -> List[Card]:
+        return self.cards
+
+    def get_two_pair(self) -> List[Card]:
+        return self.cards
+
+    def get_pair(self) -> List[Card]:
+        return self.cards
+
     def shuffle(self):
         shuffle(self.cards)
 

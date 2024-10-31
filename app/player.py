@@ -4,7 +4,7 @@ from app.card import Card
 
 class DummyPlayer:
     def __init__(self):
-        self.is_current_player: bool=False
+        self.makes_current_player: bool=False
         self.has_button: bool=False
         self.winning_hand = None
         self.pocket: List[Card]=[]
@@ -16,7 +16,7 @@ class DummyPlayer:
         pass
 
     def reset(self):
-        self.is_current_player = False
+        self.makes_current_player = False
         self.has_button = False
         self.winning_hand = None
         self.pocket.clear()

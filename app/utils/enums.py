@@ -5,9 +5,9 @@ class Mode(Enum):
     PREFLOP_SIM = "preflop_sim"
 
 
-class PokerHands(Enum):
+class PokerHand(Enum):
     ROYAL_FLUSH = "royal_flush"
-    STRAIGHT_FLUSH = "straigh_flush"
+    STRAIGHT_FLUSH = "straight_flush"
     FOUR_OF_A_KIND = "four_of_a_kind"
     FULL_HOUSE = "full_house"
     FLUSH = "flush"
