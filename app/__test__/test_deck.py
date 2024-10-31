@@ -1,8 +1,5 @@
 from app.deck import Deck, FACES, SUITS
-from app.hand_evaluator import HandEvaluator
 
-
-hand_evaluator = HandEvaluator()
 
 def test_generate_cards():
     # test a subset
@@ -21,6 +18,7 @@ def test_generate_cards():
     # test for the correct number of occurrences for each suit
     for suit in SUITS:
         assert [card.suit for card in generated_cards].count(suit) == 13
+
 
 # def test_get_royal_flush():
 #     deck = Deck()
@@ -42,11 +40,13 @@ def test_generate_cards():
 #     assert len(quads) == 4
 #     assert len(deck.cards) == 48
 
+
 # def test_get_full_house():
 #     deck = Deck()
 #     full_house = deck.get_full_house()
 #     assert len(full_house) == 5
 #     assert len(deck.cards) == 47
+
 
 # def test_get_flush():
 #     deck = Deck()
@@ -54,11 +54,13 @@ def test_generate_cards():
 #     assert len(flush) == 5
 #     assert len(deck) == 47
 
+
 # def test_get_straight():
 #     deck = Deck()
 #     straight = deck.get_straight()
 #     assert len(straight) == 5
 #     assert len(deck.cards) == 47
+
 
 # def test_get_three_of_a_kind():
 #     deck = Deck()
@@ -66,14 +68,18 @@ def test_generate_cards():
 #     assert len(trips) == 3
 #     assert len(deck.cards) == 49
 
+
 # def test_get_two_pair():
 #     deck = Deck()
 #     two_pair = deck.get_two_pair()
 #     assert len(two_pair) == 4
 #     assert len(deck.cards) == 48
 
+
 # def test_get_pair():
 #     deck = Deck()
 #     pair = deck.get_pair()
 #     assert len(pair) == 2
+#     assert len(deck.cards) == 50
+#     # check the cards have the same face
 #     assert pair[0].face == pair[1].face
