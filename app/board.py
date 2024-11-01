@@ -9,7 +9,7 @@ class Board:
     def __repr__(self):
         return str(self.cards)
 
-    def add_flop_cards(self, flop_cards: List[Card]):
+    def add_flop_cards(self, flop_cards: List[Card]) -> None:
         try:
             if len(flop_cards) == 3:
                 self.reset()
@@ -18,7 +18,7 @@ class Board:
         except ValueError as e:
             print(e)
 
-    def add_turn_card(self, turn_card: Card):
+    def add_turn_card(self, turn_card: Card) -> None:
         try:
             if len(self.cards) == 3:
                 self.cards.append(turn_card)
@@ -26,7 +26,7 @@ class Board:
         except ValueError as e:
             print(e)
 
-    def add_river_card(self, river_card: Card):
+    def add_river_card(self, river_card: Card) -> None:
         try:
             if len(self.cards) == 4:
                 self.cards.append(river_card)

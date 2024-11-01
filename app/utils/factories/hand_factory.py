@@ -1,6 +1,8 @@
 from typing import List
-from app.deck import Deck
-from app.hand import Hand
+from app.card import Card
+# from app.deck import Deck
+from app.hand.hand import Hand
+
 
 def generate_hand_from_tokens(card_tokens: List[str]) -> Hand:
     return Hand([Card(token) for token in card_tokens])

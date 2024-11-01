@@ -7,7 +7,10 @@ class Hand:
         self.cards = cards or []
         self.win_percentage = 0
         self.tie_percentage = 0
-        # self.best_hand = None
 
     def add_cards_to_hand(self, cards: List[Card]) -> None:
         self.cards.extend(cards)
+
+
+class Pocket(Hand):
+    pass

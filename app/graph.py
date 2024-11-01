@@ -11,6 +11,21 @@ class Graph:
         self.x_label = x_label
         self.y_label = y_label
 
+    @staticmethod
+    def save_plot(plot_name, output_directory: str=config['GRAPH_OUTPUT_DIR']) -> None:
+        """ save graph as image to a specified directory """
+        if not path.exists(output_directory):
+            makedirs(output_directory)
+        plt.savefig(path.join(output_directory, f'{plot_name}.png'))
+
+    @staticmethod
+    def show() -> None:
+        plt.show()
+
+    @staticmethod
+    def reset() -> None:
+        plt.clf()
+
     def plot_data(self, x: array, y: array,):
         # create the graph
         bar_plot = sns.barplot(x=x, y=y)
@@ -19,16 +34,3 @@ class Graph:
         plt.xlabel(self.x_label)
         plt.ylabel(self.y_label)
         plt.title(self.title)
-
-    def save_plot(self, plot_name, output_directory: str=config['GRAPH_OUTPUT_DIR']) -> None:
-        """ save graph as image to a specified directory """
-        if not path.exists(output_directory):
-            makedirs(output_directory)
-        output_path = path.join(output_directory, f'{plot_name}.png')
-        plt.savefig(output_path)
-
-    def show(self):
-        plt.show()
-
-    def reset(self):
-        plt.clf()

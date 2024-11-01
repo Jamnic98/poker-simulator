@@ -4,7 +4,7 @@ from app.utils.enums import Mode
 
 
 def main():
-    poker_simulator = PokerSimulator(player_count=DEFAULT_PLAYER_COUNT, mode=Mode.PREFLOP_SIM)
+    poker_simulator = PokerSimulator(player_count=DEFAULT_PLAYER_COUNT, mode=Mode.PRE_FLOP_SIM)
     poker_simulator.run()
 
 if __name__ == "__main__":

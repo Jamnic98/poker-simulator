@@ -3,7 +3,7 @@
 # from app.card import Card
 # from app.dealer import Dealer
 # from app.player import DummyPlayer
-from app.hand_evaluator import HandEvaluator
+from app.hand.evaluator import HandEvaluator
 # from app.utils.enums import PokerHand
 # from app.data import example_hands
 
@@ -11,7 +11,6 @@ from app.hand_evaluator import HandEvaluator
 hand_evaluator = HandEvaluator()
 
 def test_get_hand_type():
-    pass
     # assert hand_evaluator.get_hand_type(example_hands.royal_flush) == PokerHand.ROYAL_FLUSH
     # assert hand_evaluator.get_hand_type(example_hands.straight_flush) == PokerHand.STRAIGHT_FLUSH
     # assert hand_evaluator.get_hand_type(example_hands.four_of_a_kind) == PokerHand.FOUR_OF_A_KIND
@@ -22,6 +21,7 @@ def test_get_hand_type():
     # assert hand_evaluator.get_hand_type(example_hands.two_pair) == PokerHand.TWO_PAIR
     # assert hand_evaluator.get_hand_type(example_hands.pair) == PokerHand.PAIR
     # assert hand_evaluator.get_hand_type(example_hands.high_card) == PokerHand.HIGH_CARD
+    pass
 
 # def test_makes_royal_flush():
 #     assert hand_evaluator.makes_royal_flush(example_hands.royal_flush) is True

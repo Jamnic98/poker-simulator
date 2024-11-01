@@ -1,5 +1,5 @@
 from app.card import Card
-from app.hand import Hand
+from app.hand.hand import Hand
 
 
 royal_flush = Hand([

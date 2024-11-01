@@ -2,7 +2,7 @@ from enum import Enum
 
 
 class Mode(Enum):
-    PREFLOP_SIM = "preflop_sim"
+    PRE_FLOP_SIM = "pre_flop_sim"
 
 
 class PokerHand(Enum):
