@@ -1,7 +1,7 @@
 # from typing import List
 # from app.board import Board
 # from app.deck import Deck
-from app.hand.hand import Hand
+from app.hand import Hand
 # from app.player import DummyPlayer
 from app.utils.enums import PokerHand
 

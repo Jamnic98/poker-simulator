@@ -1,5 +1,5 @@
 from typing import List
-from random import shuffle  #, sample
+from random import choice, sample, shuffle
 from app.card import Card
 from app.utils.constants import FACES, SUITS
 
@@ -12,10 +12,8 @@ class Deck:
     def __generate_cards() -> List[Card]:
         cards = []
         for suit in SUITS:
-            for index, value in enumerate([str(i) for i in range(1, 11)] + FACES):
-                if index != 0:
-                    card = Card(value + suit)
-                    cards.append(card)
+            for value in FACES:
+                cards.append(Card(value + suit))
         return cards
 
     def get_royal_flush(self) -> List[Card]:
@@ -43,10 +41,11 @@ class Deck:
         return self.cards
 
     def get_pair(self) -> List[Card]:
+        random_face = choice(FACES)
         return self.cards
 
-    def shuffle(self):
+    def shuffle(self) -> None:
         shuffle(self.cards)
 
-    def reset(self):
+    def reset(self) -> None:
         self.cards = self.__generate_cards()

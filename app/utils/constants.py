@@ -40,5 +40,12 @@ CARD_SUIT_NAME_MAP = {
     'S': 'Spades'
 }
 
-FACES = ['J', 'Q', 'K', 'A']
+CARD_SUIT_ICON_MAP = {
+    'C': '♣',
+    'D': '♦',
+    'H': '♥',
+    'S': '♠'
+}
+
+FACES = [str(i) for i in range(2, 11)] + ['J', 'Q', 'K', 'A']
 SUITS = ['C', 'D', 'H', 'S']
