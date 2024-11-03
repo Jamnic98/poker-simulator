@@ -6,10 +6,10 @@ from app.utils.constants import FACES, SUITS
 
 class Deck:
     def __init__(self):
-        self.cards = self.__generate_cards()
+        self.cards = self.__class__._generate_cards()
 
-    @staticmethod
-    def __generate_cards() -> List[Card]:
+    @classmethod
+    def _generate_cards(cls) -> List[Card]:
         cards = []
         for suit in SUITS:
             for value in FACES:
@@ -20,4 +20,4 @@ class Deck:
         shuffle(self.cards)
 
     def reset(self) -> None:
-        self.cards = self.__generate_cards()
+        self.cards = self.__class__._generate_cards()
