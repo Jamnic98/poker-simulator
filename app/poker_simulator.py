@@ -19,11 +19,6 @@ class PokerSimulator:
         self.run_count: int = 0
         self.running: bool = False
 
-    def __repr__(self):
-        return f'Run: {self.run_count}\n' \
-            f'Player Cards: {[player.pocket for player in self.players]}\n' \
-            f'Board: {self.board}\n'
-
     def __increase_run_count(self) -> None:
         self.run_count += 1
 
