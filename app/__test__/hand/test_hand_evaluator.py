@@ -8,7 +8,7 @@
 # from app.data import example_hands
 
 
-# hand_evaluator = HandEvaluator()
+# evaluator = HandEvaluator()
 
 
 # def test_evaluation_pre_flop():

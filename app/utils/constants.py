@@ -1,5 +1,5 @@
 DEFAULT_PLAYER_COUNT = 2
-DEFAULT_RUN_COUNT = 10
+DEFAULT_RUN_COUNT = 5
 
 CARD_FACE_VALUE_MAP = {
     '2': 2,
@@ -14,7 +14,7 @@ CARD_FACE_VALUE_MAP = {
     'J': 11,
     'Q': 12,
     'K': 13,
-    'A': (14, 1),
+    'A': 14
 }
 
 CARD_FACE_NAME_MAP = {
@@ -41,10 +41,10 @@ CARD_SUIT_NAME_MAP = {
 }
 
 CARD_SUIT_ICON_MAP = {
-    'C': '♣',
-    'D': '♦',
-    'H': '♥',
-    'S': '♠'
+    'C': ' ♣ ',
+    'D': ' ♦ ',
+    'H': ' ♥ ',
+    'S': ' ♠ '
 }
 
 FACES = [str(i) for i in range(2, 11)] + ['J', 'Q', 'K', 'A']

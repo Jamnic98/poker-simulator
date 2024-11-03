@@ -1,6 +1,7 @@
 from app.card import Card
 from app.hand import Hand
 
+
 # Royal Flush of Hearts
 royal_flush = Hand([
     Card('AH'),
@@ -86,3 +87,19 @@ high_card = Hand([
     Card('JH'),
     Card('9S')
 ])
+
+single_card = Hand([
+    Card('AS'),
+])
+
+unpaired_and_unsuited_pocket = Hand([
+    Card('2C'),
+    Card('3H')
+])
+
+suited_pocket = Hand([
+    Card('4C'),
+    Card('KC')
+])
+
+empty_hand = Hand()
