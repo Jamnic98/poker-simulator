@@ -48,6 +48,7 @@ class PokerSimulator:
             # decide and assign winning hand
             # self.__decide_winning_hand(self.board, self.dealer, self.players)
             # update winning hand data
+            print(self)
             self.__reset_game_state()
 
         # self.__graph_results()
