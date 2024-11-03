@@ -1,6 +1,7 @@
 from typing import List
 # import numpy as np
 # from pandas import DataFrame
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.board import Board
 from app.dealer import Dealer
 # from app.graph import Graph
@@ -13,9 +14,7 @@ from app.utils.constants import DEFAULT_RUN_COUNT
 class PokerSimulator:
     def __init__(self, mode: Mode, player_count: int):
         self.mode: Mode = mode
-        self.players: List[DummyPlayer] = self.__set_players(player_count)
-        self.board: Board = Board()
-        self.dealer: Dealer = Dealer()
+        self.player_count = player_count
         self.hand_evaluator = HandEvaluator()
         self.run_count: int = 0
         self.running: bool = False
@@ -35,34 +34,34 @@ class PokerSimulator:
         return []
 
     def __run_pre_flop_sim(self, n_runs: int=DEFAULT_RUN_COUNT) -> None:
-        # winning_hand_data = []
-        while self.run_count < n_runs:
-            self.__increase_run_count()
-            # shuffle and deal pre-flop cards to players
-            self.dealer.shuffle_cards()
-            self.dealer.deal_starting_cards(self.players)
-            # deal flop, turn and river
-            self.dealer.deal_flop(self.board)
-            self.dealer.deal_turn_or_river(self.board)
-            self.dealer.deal_turn_or_river(self.board)
-            # decide and assign winning hand
-            # self.__decide_winning_hand(self.board, self.dealer, self.players)
-            # update winning hand data
-            print(self)
-            self.__reset_game_state()
-
-        # self.__graph_results()
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self.__run_single_pre_flop_sim) for _ in range(n_runs)]
+            for future in as_completed(futures):
+                try:
+                    future.result()  # This will raise any exceptions that occurred in the thread
+                except Exception as e:
+                    print(f"An error occurred: {e}")
         self.running = False
+
+    def __run_single_pre_flop_sim(self) -> None:
+        self.__increase_run_count()
+        board = Board()
+        dealer = Dealer()
+        players = self.__set_players(self.player_count)
+        # shuffle and deal pre-flop cards to players
+        dealer.shuffle_cards()
+        dealer.deal_starting_cards(players)
+        # deal flop, turn and river
+        dealer.deal_flop(board)
+        dealer.deal_turn_or_river(board)
+        dealer.deal_turn_or_river(board)
+        # decide and assign winning hand
+        # self.__decide_winning_hand(self.board, self.dealer, self.players)
+        # update winning hand data
+        print(f'Run {self.run_count}: \n Player Cards: {[player.pocket for player in players]}\n Board: {board}\n')
 
     # def __decide_winning_hand(self, board: Board, dealer: Dealer, players: List[Player]):
     #     winning_hand = self.hand_evaluator.rank_hands()[0]
-
-    def __reset_game_state(self) -> None:
-        """ resets the game state at the end of a play """
-        for player in self.players:
-            player.reset()
-        self.board.reset()
-        self.dealer.reset()
 
     # # TODO: implement graphing
     # def __graph_results(self) -> None:
@@ -80,7 +79,7 @@ class PokerSimulator:
 
     def __reset(self) -> None:
         """ resets the poker_sim """
-        self.__reset_game_state()
+        # self.__reset_game_state()
         self.run_count = 0
 
     def run(self) -> None:
