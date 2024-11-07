@@ -37,9 +37,7 @@ class PokerSimulator:
                     future.result()  # This will raise any exceptions that occurred in the thread
                 except Exception as e:
                     print(f"An error occurred: {e}")
-                    self.running = False
                     break
-                    exit(0)
         self.running = False
 
     def __run_single_pre_flop_sim(self, run_count: int) -> None:
@@ -54,10 +52,13 @@ class PokerSimulator:
         dealer.deal_turn_or_river(board)
         dealer.deal_turn_or_river(board)
         # decide and assign winning hand
-        winning_hand = self.__decide_winning_hand(board, dealer.deck, players)
+        winning_hand = self.__decide_winning_players(board, dealer.deck, players)
         print(f'Run {run_count}, Winning Hand: {winning_hand.cards}, {winning_hand.type.value}')
 
-    def __decide_winning_hand(self, board: Board, deck: Deck, players: List[DummyPlayer]):
+    def __decide_winning_players(self, board: Board, deck: Deck, players: List[DummyPlayer]):
+        """decide and assign the winning player's based on hand ranking"""
+        # rank the players hands based on primary hand type
+        #   then by card ranking for players with the same hand type
         ranked_hands = self.hand_evaluator.rank_hands(board, deck, players)
         return ranked_hands[0] if len(ranked_hands) > 0 else None
 

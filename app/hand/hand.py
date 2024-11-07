@@ -8,6 +8,7 @@ class Hand:
     def __init__(self, cards: Optional[List[Card]]=None):
         self.cards = cards or []
         self.type = self.get_hand_type()
+        self.best_hand: PokerHand or None = None
 
     def __repr__(self):
         return f'Cards: {self.cards}\n' \
@@ -24,13 +25,17 @@ class Hand:
         return False
 
     def add_cards(self, cards: List[Card]) -> None:
+        """ adds a provided list of cards to the deck"""
         self.cards.extend(cards)
 
     def update(self):
+        """update method to refresh the hand state and update best hand property"""
         # get best hand type
         pass
 
     def get_hand_type(self) -> PokerHand or None:
+        """returns the PokerHand which corresponds
+         to the type of hand that can be made from the cards in the hand"""
         card_count = len(self.cards)
         if card_count == 0:
             return None
