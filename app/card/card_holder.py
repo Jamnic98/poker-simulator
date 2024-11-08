@@ -5,7 +5,7 @@ from .card import Card
 class CardHolder:
     def __init__(self, cards: Optional[List[Card]]):
         self.cards = cards or []
-    
+
     def __repr__(self):
         return str(self.cards)
 

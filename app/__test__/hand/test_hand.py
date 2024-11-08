@@ -1,6 +1,6 @@
 from app.card import Card
 from app.hand import Hand
-from app.utils.example_data import example_hands
+from app.utils import example_hands
 from app.utils.enums import PokerHand
 
 

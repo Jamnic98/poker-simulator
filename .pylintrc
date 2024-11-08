@@ -142,10 +142,6 @@ bad-names=foo,
           tutu,
           tata
 
-# Bad variable names regexes, separated by a comma. If names match any regex,
-# they will always be refused
-bad-names-rgxs=
-
 # Naming style matching correct class attribute names.
 class-attribute-naming-style=any
 
@@ -197,20 +193,8 @@ good-names=i,
            Run,
            _
 
-# Good variable names regexes, separated by a comma. If names match any regex,
-# they will always be accepted
-good-names-rgxs=
-
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
-
-# Naming style matching correct inline iteration names.
-inlinevar-naming-style=any
-
-# Regular expression matching correct inline iteration names. Overrides
-# inlinevar-naming-style. If left empty, inline iteration names will be checked
-# with the set naming style.
-#inlinevar-rgx=
 
 # Naming style matching correct method names.
 method-naming-style=snake_case
@@ -322,11 +306,6 @@ max-statements=50
 # Minimum number of public methods for a class (see R0903).
 min-public-methods=2
 
-
-[EXCEPTIONS]
-
-# Exceptions that will emit a warning when caught.
-overgeneral-exceptions=builtins.BaseException,builtins.Exception
 
 
 [FORMAT]

@@ -8,11 +8,11 @@ from app.utils.enums import PokerHand
 
 
 class HandEvaluator:
-    def rank_hands(self, board: Board, players: List[DummyPlayer]) -> dict[PokerHand, List[Hand]]:
+    @staticmethod
+    def rank_hands(board: Board, players: List[DummyPlayer]) -> dict[PokerHand, List[Hand]]:
         hands: dict[PokerHand, List[Hand]] = {}
         for player in players:
             hand = Hand([*player.pocket, *board.cards])
-            hand_type = hand.get_hand_type()
             hands.setdefault(hand.get_hand_type(), []).append(hand)
 
         return hands

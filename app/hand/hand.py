@@ -1,7 +1,7 @@
 from typing import List, Optional
 from app.card import Card, CardHolder
 from app.utils.enums import PokerHand
-from app.utils.constants import FACES, CARD_FACE_VALUE_MAP
+from app.utils.constants import CARD_FACE_VALUE_MAP
 
 
 class Hand(CardHolder):
@@ -10,7 +10,7 @@ class Hand(CardHolder):
         self.type = self.get_hand_type()
 
     def __makes_x_of_a_kind(self, x: int) -> bool:
-        """returns true if x number of occurences of a card face in hand"""
+        """returns true if x number of occurrences of a card face in hand"""
         if len(self.cards) < x:
             return False
         face_counts = {}
@@ -52,29 +52,18 @@ class Hand(CardHolder):
         """Returns True if it is possible to make a royal flush."""
         if len(self.cards) < 5:
             return False
-        # Step 1: Organize cards by suit
+        # Group cards by suit and get unique values for each suit
         suits = {}
         for card in self.cards:
+            value = CARD_FACE_VALUE_MAP.get(card.face, card.face)
             if card.suit not in suits:
-                suits[card.suit] = []
-            # Handle Ace's dual values
-            card_value = CARD_FACE_VALUE_MAP.get(card.face)
-            if card.face == 'A':
-                suits[card.suit].extend([card_value, 1])
-            else:
-                suits[card.suit].append(card_value)
-
-        # Step 2: Check each suit for a straight
-        for suit, ranks in suits.items():
-            if len(ranks) < 5:
-                continue  # Not enough cards in this suit for a straight flush
-            # Sort and remove duplicates
-            sorted_ranks = sorted(set(ranks))
-            # Step 3: Look for a sequence of 5 consecutive ranks
-            for i in range(len(sorted_ranks) - 4):
-                if sorted_ranks[i + 4] - sorted_ranks[i] == 4 and sorted_ranks[-1] == 14 and sorted_ranks[-5] == 10:
-                    # Found a straight flush in this suit
-                    return True
+                suits[card.suit] = set()
+            suits[card.suit].add(value)
+        # Check each suit for the royal flush ranks (10, J, Q, K, A)
+        royal_flush_ranks = {10, 11, 12, 13, 14}
+        for ranks in suits.values():
+            if royal_flush_ranks.issubset(ranks):
+                return True
         return False
 
     def makes_straight_flush(self) -> bool:
