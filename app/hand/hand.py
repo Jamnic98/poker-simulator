@@ -1,17 +1,13 @@
 from typing import List, Optional
-from app.card import Card
+from app.card import Card, CardHolder
 from app.utils.enums import PokerHand
 from app.utils.constants import FACES, CARD_FACE_VALUE_MAP
 
 
-class Hand:
+class Hand(CardHolder):
     def __init__(self, cards: Optional[List[Card]]=None):
-        self.cards = cards or []
+        super().__init__(cards)
         self.type = self.get_hand_type()
-        self.best_hand: PokerHand or None = None
-
-    def __repr__(self):
-        return f'Cards: {self.cards}\n' \
 
     def __makes_x_of_a_kind(self, x: int) -> bool:
         """returns true if x number of occurences of a card face in hand"""
@@ -23,15 +19,6 @@ class Hand:
             if face_counts[card.face] == x:
                 return True
         return False
-
-    def add_cards(self, cards: List[Card]) -> None:
-        """ adds a provided list of cards to the deck"""
-        self.cards.extend(cards)
-
-    def update(self):
-        """update method to refresh the hand state and update best hand property"""
-        # get best hand type
-        pass
 
     def get_hand_type(self) -> PokerHand or None:
         """returns the PokerHand which corresponds
@@ -180,11 +167,11 @@ class Hand:
         if len(self.cards) < 4:
             return False
 
-        face_count = {}
         pair_count = 0
+        face_count_map = {}
         for card in self.cards:
-            face_count[card.face] = face_count.get(card.face, 0) + 1
-            if face_count[card.face] == 2:
+            face_count_map[card.face] = face_count_map.get(card.face, 0) + 1
+            if face_count_map[card.face] == 2:
                 pair_count += 1
                 # Stop early if we have found two pairs
                 if pair_count == 2:
