@@ -6,13 +6,14 @@ class Mode(Enum):
 
 
 class PokerHand(Enum):
-    ROYAL_FLUSH = "royal_flush"
-    STRAIGHT_FLUSH = "straight_flush"
-    FOUR_OF_A_KIND = "four_of_a_kind"
-    FULL_HOUSE = "full_house"
-    FLUSH = "flush"
-    STRAIGHT = "straight"
-    THREE_OF_A_KIND = "three_of_a_kind"
-    TWO_PAIR = "two_pair"
-    PAIR = "pair"
-    HIGH_CARD = "high_card"
+    HIGH_CARD = 1
+    PAIR = 2
+    TWO_PAIR = 3
+    THREE_OF_A_KIND = 4
+    STRAIGHT = 5
+    FLUSH = 6
+    FULL_HOUSE = 7
+    FOUR_OF_A_KIND = 8
+    STRAIGHT_FLUSH = 9
+    ROYAL_FLUSH = 10
+    

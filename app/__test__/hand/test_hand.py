@@ -15,25 +15,25 @@ def test_add_cards():
 
 def test_get_hand_type():
     hand = example_hands.royal_flush
-    assert hand.get_hand_type() == PokerHand.ROYAL_FLUSH
+    assert hand.get_hand_type()[0] == PokerHand.ROYAL_FLUSH
     hand = example_hands.straight_flush
-    assert hand.get_hand_type() == PokerHand.STRAIGHT_FLUSH
+    assert hand.get_hand_type()[0] == PokerHand.STRAIGHT_FLUSH
     hand = example_hands.four_of_a_kind
-    assert hand.get_hand_type() == PokerHand.FOUR_OF_A_KIND
+    assert hand.get_hand_type()[0] == PokerHand.FOUR_OF_A_KIND
     hand = example_hands.full_house
-    assert hand.get_hand_type() == PokerHand.FULL_HOUSE
+    assert hand.get_hand_type()[0] == PokerHand.FULL_HOUSE
     hand = example_hands.flush
-    assert hand.get_hand_type() == PokerHand.FLUSH
+    assert hand.get_hand_type()[0] == PokerHand.FLUSH
     hand = example_hands.straight
-    assert hand.get_hand_type() == PokerHand.STRAIGHT
+    assert hand.get_hand_type()[0] == PokerHand.STRAIGHT
     hand = example_hands.three_of_a_kind
-    assert hand.get_hand_type() == PokerHand.THREE_OF_A_KIND
+    assert hand.get_hand_type()[0] == PokerHand.THREE_OF_A_KIND
     hand = example_hands.two_pair
-    assert hand.get_hand_type() == PokerHand.TWO_PAIR
+    assert hand.get_hand_type()[0] == PokerHand.TWO_PAIR
     hand = example_hands.pair
-    assert hand.get_hand_type() == PokerHand.PAIR
+    assert hand.get_hand_type()[0] == PokerHand.PAIR
     hand = example_hands.high_card
-    assert hand.get_hand_type() == PokerHand.HIGH_CARD
+    assert hand.get_hand_type()[0] == PokerHand.HIGH_CARD
 
 def test_makes_royal_flush():
     assert example_hands.royal_flush.makes_royal_flush() is True

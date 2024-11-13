@@ -1,7 +1,7 @@
 from asyncio import CancelledError
 from typing import List
 # import numpy as np
-# from pandas import DataFrame
+from pandas import concat, DataFrame
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from app.board import Board
 from app.dealer import Dealer
@@ -28,22 +28,25 @@ class PokerSimulator:
         return []
 
     def __run_pre_flop_sim(self, n_runs: int=RUN_COUNT) -> None:
+        results = DataFrame()
         with ThreadPoolExecutor() as executor:
-            results = []
             # Submit tasks and store futures in a list
             futures = [
                 executor.submit(self.__run_single_pre_flop_sim) for _ in range(1, n_runs + 1)
             ]
             for run_number, future in enumerate(as_completed(futures), start=1):
                 try:
-                    results.append(future.result())
+                    future_result = future.result()
+                    future_result['run_number'] = run_number
+                    results = concat([results, future_result], ignore_index=True)
                 except (CancelledError, TimeoutError) as e:
                     print(f"An error occurred during run {run_number}: {e}")
-                    break
-            pprint(results)
+        
+        self.__graph_results(results)
         self.running = False
 
-    def __run_single_pre_flop_sim(self):
+    def __run_single_pre_flop_sim(self) -> DataFrame:
+        # init
         board = Board()
         dealer = Dealer()
         players = self.__set_players(self.player_count)
@@ -54,28 +57,43 @@ class PokerSimulator:
         dealer.deal_flop(board)
         dealer.deal_turn_or_river(board)
         dealer.deal_turn_or_river(board)
-        # decide and assign winning hand
-        # winning_hand = self.__decide_winning_players(board, dealer.deck, players)
-        return self.hand_evaluator.rank_hands(board, players)
 
-    # def __decide_winning_players(self, board: Board, deck: Deck, players: List[DummyPlayer]):
-    #     """decide and assign the winning player's based on hand ranking"""
-        # rank the players hands based on primary hand type
-        #   then by card ranking for players with the same hand type
-        # ranked_hands = self.hand_evaluator.rank_hands(board, deck, players)
-        # return ranked_hands[0] if len(ranked_hands) > 0 else None
-        # return self.hand_evaluator.rank_hands(board, deck, players)
-        # pass
+        results = []
+        # decide and assign winning hands
+        ranked_hands = self.hand_evaluator.rank_hands(board, players)
+        for hand in ranked_hands:
+            results.append({
+                'cards': hand.cards,
+                'is_winning_hand': hand == ranked_hands[0],
+                'hand_type': hand.type
+            })
+        return DataFrame(results)
 
-    # # TODO: implement graphing
-    # def __graph_results(self) -> None:
-    #     """ graphs the winning hand data """
-    #     graph = Graph(title='Graph')
-    #     x = np.arange(1, 10)
-    #     y = np.square(x)
-    #     graph.plot_data(x=x, y=y)
-    #     graph.show()
-    #     graph.save_plot(plot_name='example_plot')
+    def __graph_results(self, data: DataFrame) -> None:
+        """ graphs the winning hand data """
+        # df = data
+        # # Assuming df is your DataFrame
+        # # Step 1: Extract starting hand (first two cards) as a tuple
+        # df['starting_hand'] = df['cards'].apply(lambda x: tuple(x[:2]))  # Get the first two cards
+
+        # # Step 2: Group by starting hand and calculate win percentages
+        # win_stats = df.groupby('starting_hand').agg(
+        #     total_hands=('is_winning_hand', 'count'),
+        #     total_wins=('is_winning_hand', lambda x: (x == True).sum())
+        # )
+
+        # # Step 3: Calculate win percentage
+        # win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
+
+        # # Step 4: Display the results
+        # print(win_stats[['total_hands', 'total_wins', 'win_percentage']])
+        # graph = Graph(title='Graph')
+        # x = np.arange(1, 10)
+        # y = np.square(x)
+        # graph.plot_data(x=x, y=y)
+        # graph.show()
+        # graph.save_plot(plot_name='example_plot')
+        print(data)
 
     def __reset(self) -> None:
         """ resets the poker_sim """

@@ -20,7 +20,7 @@ class Hand(CardHolder):
                 return True
         return False
 
-    def get_hand_type(self) -> PokerHand or None:
+    def get_hand_type(self) -> (PokerHand, List, List) or None:
         """returns the PokerHand which corresponds
          to the type of hand that can be made from the cards in the hand"""
         card_count = len(self.cards)
@@ -46,7 +46,7 @@ class Hand(CardHolder):
             hand_type = PokerHand.PAIR
         else:
             hand_type = PokerHand.HIGH_CARD
-        return hand_type
+        return hand_type, (), ()
 
     def makes_royal_flush(self) -> bool:
         """Returns True if it is possible to make a royal flush."""

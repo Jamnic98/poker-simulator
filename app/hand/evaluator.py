@@ -10,9 +10,13 @@ from app.utils.enums import PokerHand
 class HandEvaluator:
     @staticmethod
     def rank_hands(board: Board, players: List[DummyPlayer]) -> dict[PokerHand, List[Hand]]:
-        hands: dict[PokerHand, List[Hand]] = {}
+        ranked_hands = []
+        hands_dict: dict[PokerHand, List[Hand]] = {}
         for player in players:
             hand = Hand([*player.pocket, *board.cards])
-            hands.setdefault(hand.get_hand_type(), []).append(hand)
+            hands_dict.setdefault(hand.type[0], []).append(hand)
 
-        return hands
+        for ph in reversed(PokerHand):
+            ranked_hands.extend(hands_dict.get(ph) or [])
+            
+        return ranked_hands
