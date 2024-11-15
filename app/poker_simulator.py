@@ -33,26 +33,27 @@ class PokerSimulator:
         return []
 
     def __run_pre_flop_sim(self, n_runs: int = RUN_COUNT) -> None:
-        results = DataFrame()
+        temp_results = []
         start_time = time()
         with ProcessPoolExecutor() as executor:
-            futures = [
-                executor.submit(self._run_single_pre_flop_sim) for _ in range(1, n_runs + 1)
-            ]
-            for run_number, future in enumerate(as_completed(futures), start=1):
-                try:
-                    future_result = future.result()
-                    future_result['run_number'] = run_number
-                    results = concat([results, future_result], ignore_index=True)
+            chunk_size = 1000
+            for start in range(0, n_runs, chunk_size):
+                end = min(start + chunk_size, n_runs+1)
+                futures = [executor.submit(self._run_single_pre_flop_sim) for _ in range(start, end)]    
+                for run_number, future in enumerate(as_completed(futures), start=1):
+                    try:
+                        future_result = future.result()
+                        future_result['run_number'] = run_number
+                        temp_results.append(future_result)
+                        if run_number % 1000 == 0:
+                            elapsed_time = time() - start_time
+                            print(f'Run: {run_number}, Duration: {elapsed_time:.2f}s')
+                            start_time = time()
+                    except (CancelledError, TimeoutError) as e:
+                        print(f"An error occurred during run {run_number}: {e}")
 
-                    if run_number % 5000 == 0:
-                        elapsed_time = time() - start_time
-                        print(f'Run: {run_number}, Duration: {elapsed_time:.2f}s')
-                        start_time = time()
-                except (CancelledError, TimeoutError) as e:
-                    print(f"An error occurred during run {run_number}: {e}")
-
-        self.__graph_results(results, 'pre_flop_sim_results')
+        results = concat(temp_results, ignore_index=True)
+        self.__graph_results(results, 'pre_flop_si m_results')
         self.__output_results_to_file(results, 'pre_flop_sim_results')
         self.running = False
 
