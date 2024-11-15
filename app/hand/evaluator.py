@@ -9,7 +9,7 @@ from app.utils.enums import PokerHand
 
 class HandEvaluator:
     @staticmethod
-    def rank_hands(board: Board, players: List[DummyPlayer]) -> dict[PokerHand, List[Hand]]:
+    def rank_hands(board: Board, players: List[DummyPlayer]) -> []:  # dict[PokerHand, List[Hand]]:
         ranked_hands = []
         hands_dict: dict[PokerHand, List[Hand]] = {}
         for player in players:
