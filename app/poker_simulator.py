@@ -1,11 +1,11 @@
 from asyncio import CancelledError
 from typing import List
+import numpy as np
 from pandas import concat, DataFrame
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from app.board import Board
 from app.dealer import Dealer
-# from app.deck import Deck
-# from app.graph import Graph
+from app.graph import Graph
 from app.hand.evaluator import HandEvaluator
 from app.player import DummyPlayer
 from app.utils.enums import Mode, PokerHand
@@ -61,7 +61,9 @@ class PokerSimulator:
         ranked_hands = self.hand_evaluator.rank_hands(board, players)
         for hand in ranked_hands:
             results.append({
-                'cards': hand.get_sorted_cards(),
+                'pocket': hand.cards[:2],
+                'board': hand.cards[2:],
+                'sorted_cards': hand.get_sorted_cards(),
                 'is_winning_hand': hand == ranked_hands[0],
                 'hand_type': hand.type
             })
@@ -69,29 +71,28 @@ class PokerSimulator:
 
     def __graph_results(self, data: DataFrame) -> None:
         """ graphs the winning hand data """
-        print(data)
-        # df = data
-        # # Assuming df is your DataFrame
-        # # Step 1: Extract starting hand (first two cards) as a tuple
-        # df['starting_hand'] = df['cards'].apply(lambda x: tuple(x[:2]))  # Get the first two cards
+        df = data
+        # Assuming df is your DataFrame
+        # Step 1: Extract starting hand (first two cards) as a tuple
+        df['ordered_starting_hand'] = df['sorted_cards'].apply(lambda x: x[:2]).apply(lambda x: f'{x[0].face+x[0].suit}_{x[1].face + x[1].suit}')
 
-        # # Step 2: Group by starting hand and calculate win percentages
-        # win_stats = df.groupby('starting_hand').agg(
-        #     total_hands=('is_winning_hand', 'count'),
-        #     total_wins=('is_winning_hand', lambda x: (x == True).sum())
-        # )
+        # Step 2: Group by starting hand and calculate win percentages
+        win_stats = df.groupby('ordered_starting_hand').agg(
+            total_hands=('is_winning_hand', 'count'),
+            total_wins=('is_winning_hand', lambda x: (x == True).sum())
+        )
 
-        # # Step 3: Calculate win percentage
-        # win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
-
-        # # Step 4: Display the results
-        # print(win_stats[['total_hands', 'total_wins', 'win_percentage']])
-        # graph = Graph(title='Graph')
-        # x = np.arange(1, 10)
-        # y = np.square(x)
-        # graph.plot_data(x=x, y=y)
-        # graph.show()
-        # graph.save_plot(plot_name='example_plot')
+        # Step 3: Calculate win percentage
+        win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
+        win_stats.sort_values('win_percentage', inplace=True, ascending=False)
+        print(win_stats)
+        # Step 4: Display the results
+        graph = Graph(title='Graph')
+        x = win_stats.index[:10]
+        y = win_stats['win_percentage'][:10]
+        graph.plot_data(x=x, y=y)
+        graph.show()
+        graph.save_plot(plot_name='example_plot')
 
     def __reset(self) -> None:
         """ resets the poker_sim """
