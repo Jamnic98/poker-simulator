@@ -135,7 +135,7 @@ class Hand(CardHolder):
         """Returns True if it is possible to make a flush."""
         if len(self.cards) < 5:
             return False
-
+        # collect suits and map to occurence count
         suit_count = {}
         for card in self.cards:
             suit_count[card.suit] = suit_count.get(card.suit, 0) + 1
@@ -162,7 +162,6 @@ class Hand(CardHolder):
         for i in range(len(sorted_ranks) - 4):
             if sorted_ranks[i + 4] - sorted_ranks[i] == 4:
                 return True
-
         return False
 
     def makes_three_of_a_kind(self) -> bool:
@@ -190,6 +189,7 @@ class Hand(CardHolder):
         return self.__makes_x_of_a_kind(x=2)
 
     def get_sorted_cards(self) -> List[Card]:
+        """Sorts cards in hand by sorting the pocket and board cards separately"""
         if len(self) == 0:
             return self.cards
         def sort_cards(cards: List[Card]):
@@ -200,6 +200,7 @@ class Hand(CardHolder):
         return sort_cards(self.cards[:2].copy()) + sort_cards(self.cards[2:].copy())
 
     def reset(self) -> None:
+        """Resets the hand state"""
         self.cards.clear()
         self.type = None
 
