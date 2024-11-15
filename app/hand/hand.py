@@ -7,7 +7,15 @@ from app.utils.constants import CARD_FACE_VALUE_MAP
 class Hand(CardHolder):
     def __init__(self, cards: Optional[List[Card]]=None):
         super().__init__(cards)
-        self.type = self.get_hand_type()
+        try:
+            if len(self) > 7:
+                raise ValueError
+            if cards and len(set(cards)) != len(set(self.cards)):
+                raise ValueError
+            self.type = self.get_hand_type()
+        except ValueError as e:
+            self.reset()
+            print(e)
 
     def __makes_x_of_a_kind(self, x: int) -> bool:
         """returns true if x number of occurrences of a card face in hand"""
@@ -19,6 +27,18 @@ class Hand(CardHolder):
             if face_counts[card.face] == x:
                 return True
         return False
+
+    def add_cards(self, cards: List[Card]) -> None:
+        if (cards_len := len(cards)) == 0:
+            return
+        try:
+            if cards_len + len(self) > 7:
+                raise ValueError
+            if len(set(cards)) != len(set(cards.copy() + self.cards)):
+                raise ValueError
+            self.cards.extend(cards)
+        except ValueError:
+            pass
 
     def get_hand_type(self) -> (PokerHand, List, List) or None:
         """returns the PokerHand which corresponds
@@ -69,20 +89,19 @@ class Hand(CardHolder):
     def makes_straight_flush(self) -> bool:
         if len(self.cards) < 5:
             return False
-
-        # Step 1: Organize cards by suit
+        # arrange cards by suit
         suits = {}
         for card in self.cards:
             if card.suit not in suits:
                 suits[card.suit] = []
-            # Handle Ace's dual values
             card_value = CARD_FACE_VALUE_MAP.get(card.face)
+            # update suits map and handle aces dual values (14, 1)
             if card.face == 'A':
                 suits[card.suit].extend([card_value, 1])
             else:
                 suits[card.suit].append(card_value)
 
-        # Step 2: Check each suit for a straight
+        # test each suit for a straight
         for suit, ranks in suits.items():
             if len(ranks) < 5:
                 continue
@@ -102,14 +121,14 @@ class Hand(CardHolder):
         """Returns True if it is possible to make a full house."""
         if len(self.cards) < 5:
             return False
-
+        # arrange cards by face
         face_dict = {}
         for card in self.cards:
             face_dict.setdefault(card.face, []).append(card)
-        # Count the number of faces that have exactly 3 and exactly 2 cards
+        # count the number of faces that have exactly 3 and exactly 2 cards
         pair = sum(1 for cards in face_dict.values() if len(cards) == 2)
         three_of_a_kind = sum(1 for cards in face_dict.values() if len(cards) == 3)
-        # A full house requires at least one three-of-a-kind and one pair
+        # test for a three-of-a-kind and one pair
         return three_of_a_kind > 0 and pair > 0
 
     def makes_flush(self) -> bool:
@@ -128,19 +147,18 @@ class Hand(CardHolder):
         """Returns True if it is possible to make a straight."""
         if len(self.cards) < 5:
             return False
-
-        # Collect unique rank values, accounting for Ace's dual values (14 and 1)
+        # collect unique rank values
         rank_values = set()
         for card in self.cards:
             card_value = CARD_FACE_VALUE_MAP.get(card.face)
-            # handle aces
+            # handle aces dual values (14, 1)
             if card.face == 'A':
                 rank_values.update((card_value, 1))
             else:
                 rank_values.add(card_value)
-        # Sort the unique ranks to check for consecutive sequences
+        # sort the unique ranks to check for consecutive sequences
         sorted_ranks = sorted(rank_values)
-        # Check for any sequence of 5 consecutive ranks
+        # check for any sequence of 5 consecutive ranks
         for i in range(len(sorted_ranks) - 4):
             if sorted_ranks[i + 4] - sorted_ranks[i] == 4:
                 return True
@@ -155,14 +173,14 @@ class Hand(CardHolder):
         """Returns True if it is possible to make two pairs."""
         if len(self.cards) < 4:
             return False
-
+        # map card faces in cards to the number of occurences
         pair_count = 0
         face_count_map = {}
         for card in self.cards:
             face_count_map[card.face] = face_count_map.get(card.face, 0) + 1
             if face_count_map[card.face] == 2:
                 pair_count += 1
-                # Stop early if we have found two pairs
+                # stop early once 2 pairs found
                 if pair_count == 2:
                     return True
         return False
@@ -172,8 +190,18 @@ class Hand(CardHolder):
         return self.__makes_x_of_a_kind(x=2)
 
     def get_sorted_cards(self) -> List[Card]:
-        return self.cards
+        if len(self) == 0:
+            return self.cards
+        def sort_cards(cards: List[Card]):
+            return sorted(
+                    sorted(cards, key=lambda c: c.suit),
+                    key=lambda c: CARD_FACE_VALUE_MAP.get(c.face), reverse=True
+                )
+        return sort_cards(self.cards[:2].copy()) + sort_cards(self.cards[2:].copy())
 
+    def reset(self) -> None:
+        self.cards.clear()
+        self.type = None
 
 
 class Pocket(Hand):

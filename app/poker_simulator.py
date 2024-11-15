@@ -1,6 +1,5 @@
 from asyncio import CancelledError
 from typing import List
-# import numpy as np
 from pandas import concat, DataFrame
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from app.board import Board
@@ -30,7 +29,7 @@ class PokerSimulator:
     def __run_pre_flop_sim(self, n_runs: int=RUN_COUNT) -> None:
         results = DataFrame()
         with ProcessPoolExecutor() as executor:
-            # Submit tasks and store futures in a list
+            # submit tasks and store futures in a list
             futures = [
                 executor.submit(self._run_single_pre_flop_sim) for _ in range(1, n_runs + 1)
             ]
