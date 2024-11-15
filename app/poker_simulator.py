@@ -57,13 +57,12 @@ class PokerSimulator:
         dealer.deal_flop(board)
         dealer.deal_turn_or_river(board)
         dealer.deal_turn_or_river(board)
-
+        # create a list of results for each player hand
         results = []
-        # decide and assign winning hands
         ranked_hands = self.hand_evaluator.rank_hands(board, players)
         for hand in ranked_hands:
             results.append({
-                'cards': hand.cards,
+                'cards': hand.get_sorted_cards(),
                 'is_winning_hand': hand == ranked_hands[0],
                 'hand_type': hand.type
             })
@@ -71,6 +70,7 @@ class PokerSimulator:
 
     def __graph_results(self, data: DataFrame) -> None:
         """ graphs the winning hand data """
+        print(data)
         # df = data
         # # Assuming df is your DataFrame
         # # Step 1: Extract starting hand (first two cards) as a tuple
@@ -93,7 +93,6 @@ class PokerSimulator:
         # graph.plot_data(x=x, y=y)
         # graph.show()
         # graph.save_plot(plot_name='example_plot')
-        print(data)
 
     def __reset(self) -> None:
         """ resets the poker_sim """

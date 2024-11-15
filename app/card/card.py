@@ -1,12 +1,18 @@
-from app.utils.constants import CARD_FACE_VALUE_MAP, CARD_FACE_NAME_MAP, CARD_SUIT_NAME_MAP, CARD_SUIT_ICON_MAP
+from app.utils.constants import CARD_FACE_VALUE_MAP, CARD_FACE_NAME_MAP, CARD_SUIT_NAME_MAP, CARD_SUIT_ICON_MAP, FACES, SUITS
 
 
 class Card:
     def __init__(self, token: str):
-        self.face: str = token[:-1]
-        self.suit: str = token[-1]
-        self.name: str = self.__set_name()
-        self.face_value: int = CARD_FACE_VALUE_MAP.get(self.face)
+        face, suit = token[:-1], token[-1]
+        try:
+            if face not in FACES or suit not in SUITS:
+                raise ValueError(f'Invalid token: {token}')
+            self.face: str = face
+            self.suit: str = suit
+            self.name: str = self.__set_name()
+            self.face_value: int = CARD_FACE_VALUE_MAP.get(self.face)
+        except ValueError as e:
+            print(e)
 
     def __repr__(self):
         return str(self.face + CARD_SUIT_ICON_MAP.get(self.suit))

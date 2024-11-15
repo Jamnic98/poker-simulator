@@ -171,6 +171,10 @@ class Hand(CardHolder):
         """Returns True if it is possible to make a pair."""
         return self.__makes_x_of_a_kind(x=2)
 
+    def get_sorted_cards(self) -> List[Card]:
+        return self.cards
+
+
 
 class Pocket(Hand):
     def __init__(self):

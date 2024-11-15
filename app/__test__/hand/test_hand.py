@@ -1,3 +1,4 @@
+from random import shuffle
 from app.card import Card
 from app.hand import Hand
 from app.utils import example_hands
@@ -7,6 +8,7 @@ from app.utils.enums import PokerHand
 def test_init():
     hand = Hand()
     assert hand.cards == []
+    hand = Hand(example_hands.empty_hand.cards)
 
 def test_add_cards():
     hand = Hand()
@@ -84,3 +86,15 @@ def test_makes_pair():
     assert example_hands.two_pair.makes_pair() is True
     assert example_hands.single_card.makes_pair() is False
     assert example_hands.empty_hand.makes_pair() is False
+
+# def test_get_sorted_cards():
+#     test_hand = Hand([Card('8H'), Card('9H'), Card('JH'), Card('10H'), Card('QH'), Card('AH'), Card('KH')])
+#     ordered_test_hand = Hand([Card('9H'), Card('8H'), Card('AH'), Card('KH'), Card('QH'), Card('JH'), Card('10H')])
+#     for k, v in enumerate(test_hand.get_sorted_cards()):
+#         assert v is ordered_test_hand.cards[k]
+
+    # test_hand = Hand([Card('2C'), Card('2H'), Card('JH'), Card('10H'), Card('QH'), Card('AH'), Card('KH')])
+    # ordered_test_hand = Hand([Card('9H'), Card('8H'), Card('AH'), Card('KH'), Card('QH'), Card('JH'), Card('10H')])
+    # # shuffle cards in hand
+    # for k, v in enumerate(test_hand.get_sorted_cards()):
+    #     assert v is ordered_test_hand.cards[k]

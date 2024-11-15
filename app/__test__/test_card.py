@@ -1,3 +1,4 @@
+from pytest import raises
 from app.card import Card
 
 def test_card():
@@ -28,3 +29,6 @@ def test_card():
     assert card.face == '3'
     assert card.suit == 'D'
     assert card.face_value == 3
+
+    card = Card('FU')
+    assert raises(ValueError)
