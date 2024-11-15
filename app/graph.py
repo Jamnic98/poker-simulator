@@ -32,6 +32,6 @@ class Graph:
         bar_plot.plot()
         # plot labels
         plt.xlabel(self.x_label)
-        plt.xticks(rotation=90)
+        plt.xticks(rotation=45)
         plt.ylabel(self.y_label)
         plt.title(self.title)
