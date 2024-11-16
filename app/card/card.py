@@ -15,11 +15,11 @@ class Card:
             print(e)
 
     def serialize(self):
-        return {"face": self.face, "suit": self.suit}
+        return self.face+self.suit
 
     @classmethod
     def deserialize(cls, data):
-        return cls(data["face"], data["suit"])
+        return cls(data)
 
     def __repr__(self):
         return str(self.face + CARD_SUIT_ICON_MAP.get(self.suit))

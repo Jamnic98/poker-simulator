@@ -2,6 +2,7 @@ from os import getcwd, path
 from time import time
 from asyncio import CancelledError
 from typing import List
+from numpy import sum as np_sum
 from pandas import concat, DataFrame
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -10,14 +11,13 @@ from app.dealer import Dealer
 from app.graph import Graph
 from app.hand.evaluator import HandEvaluator
 from app.player import DummyPlayer
-from app.utils.enums import Mode, PokerHand
-from app.utils.constants import RUN_COUNT
-from pprint import pprint
+from app.utils.enums import Mode
 
 
 class PokerSimulator:
-    def __init__(self, mode: Mode, player_count: int):
+    def __init__(self, mode: Mode, run_count: int, player_count: int = 2):
         self.mode: Mode = mode
+        self.run_count = run_count
         self.player_count = player_count
         self.running: bool = False
         self.hand_evaluator = HandEvaluator()
@@ -32,7 +32,7 @@ class PokerSimulator:
             return [DummyPlayer() for _ in range(player_count)]
         return []
 
-    def __run_pre_flop_sim(self, n_runs: int = RUN_COUNT) -> None:
+    def __run_pre_flop_sim(self, n_runs) -> None:
         """Runs pre_flop simulation in concurrent batches"""
         chunk_size = 10000
         chunk_number = 0
@@ -40,16 +40,15 @@ class PokerSimulator:
         start_time = time()
         with ProcessPoolExecutor() as executor:
             for start in range(1, n_runs + 1, chunk_size):
-                chunk_number += 1
                 end = min(start + chunk_size, n_runs + 1)
                 futures = [executor.submit(self._run_single_pre_flop_sim) for _ in range(start, end)]
+                chunk_number += 1
                 temp_results = []
                 chunk_start_time = time()
                 for chunk_run_number, future in enumerate(as_completed(futures), start=1):
                     try:
                         future_result = future.result()
                         temp_results.append(future_result)
-
                         # Periodically save and log
                         if chunk_run_number % chunk_size == 0:
                             elapsed_time = time() - chunk_start_time
@@ -58,11 +57,13 @@ class PokerSimulator:
                     except (CancelledError, TimeoutError) as e:
                         print(f"An error occurred during run {chunk_run_number}: {e}")
 
-                # Combine chunk results and save to file
+                # combine chunk results and save to file
                 chunk_df = concat(temp_results, ignore_index=True)
-                self.__output_chunk_results_to_file(chunk_df, chunk_number)
-                all_results.append(chunk_df)  # Append chunk results for final aggregation
+                all_results.append(chunk_df)
+                # save chunk data to file
+                # self.__output_chunk_results_to_file(chunk_df, chunk_number)
 
+        # output final results
         print(f'Total Run Duration: {(time() - start_time):.2f}s')
         # Combine all chunks into a single DataFrame for graphing
         final_results = concat(all_results, ignore_index=True)
@@ -94,18 +95,17 @@ class PokerSimulator:
             })
         return DataFrame(results_list)
 
-    @staticmethod
-    def __graph_results(data: DataFrame, plot_name: str = 'pre_flop_results') -> None:
+    def __graph_results(self, data: DataFrame, plot_name: str = 'pre_flop_results') -> None:
         """Graphs the winning hand data"""
         # Extract starting hand (first two cards) as a tuple
         data['ordered_starting_hand'] = data['pocket'].map(
-            lambda x: f"{x[0]['face']}{x[0]['suit']}_{x[1]['face']}{x[1]['suit']}"
+            lambda x: f"{x[0]}_{x[-1]}"
         )
 
         # Group by starting hand and calculate win percentages
         win_stats = data.groupby('ordered_starting_hand').agg(
             total_hands=('is_winning_hand', 'count'),
-            total_wins=('is_winning_hand', lambda x: (x == True).sum())
+            total_wins=('is_winning_hand', lambda x: np_sum(x))
         )
 
         # Calculate win percentage
@@ -114,7 +114,11 @@ class PokerSimulator:
         print(win_stats)
 
         # Display the results
-        graph = Graph(x_label='Starting Hand', y_label='Win %', title='Pre-flop Simulation Results')
+        graph = Graph(
+            x_label='Starting Hand',
+            y_label='Win %',
+            title=f'Pre-flop Simulation Results @ {self.run_count:.0E} runs w/ {self.player_count} players'
+        )
         graph.plot_data(x=win_stats.index, y=win_stats['win_percentage'])
         graph.save_plot(plot_name=plot_name)
         graph.show()
@@ -129,5 +133,5 @@ class PokerSimulator:
         self.running = True
         while self.running:
             if self.mode == Mode.PRE_FLOP_SIM:
-                self.__run_pre_flop_sim()
+                self.__run_pre_flop_sim(self.run_count)
         self.__reset()
