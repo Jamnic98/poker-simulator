@@ -37,15 +37,14 @@ class PokerSimulator:
         chunk_size = 10000
         chunk_number = 0
         all_results = []
-
+        start_time = time()
         with ProcessPoolExecutor() as executor:
             for start in range(1, n_runs + 1, chunk_size):
                 chunk_number += 1
                 end = min(start + chunk_size, n_runs + 1)
                 futures = [executor.submit(self._run_single_pre_flop_sim) for _ in range(start, end)]
                 temp_results = []
-                start_time = time()
-
+                chunk_start_time = time()
                 for chunk_run_number, future in enumerate(as_completed(futures), start=1):
                     try:
                         future_result = future.result()
@@ -53,9 +52,9 @@ class PokerSimulator:
 
                         # Periodically save and log
                         if chunk_run_number % chunk_size == 0:
-                            elapsed_time = time() - start_time
+                            elapsed_time = time() - chunk_start_time
                             print(f"Run: {(chunk_number-1)*chunk_size + 1} -> {chunk_number * chunk_size}, Duration: {elapsed_time:.2f}s")
-                            start_time = time()
+                            chunk_start_time = time()
                     except (CancelledError, TimeoutError) as e:
                         print(f"An error occurred during run {chunk_run_number}: {e}")
 
@@ -64,6 +63,7 @@ class PokerSimulator:
                 self.__output_chunk_results_to_file(chunk_df, chunk_number)
                 all_results.append(chunk_df)  # Append chunk results for final aggregation
 
+        print(f'Total Run Duration: {(time() - start_time):.2f}s')
         # Combine all chunks into a single DataFrame for graphing
         final_results = concat(all_results, ignore_index=True)
         self.__graph_results(final_results)
@@ -114,7 +114,7 @@ class PokerSimulator:
         print(win_stats)
 
         # Display the results
-        graph = Graph(x_label='Starting Hand', y_label='Win %', title='Pre Flop Simulation Results')
+        graph = Graph(x_label='Starting Hand', y_label='Win %', title='Pre-flop Simulation Results')
         graph.plot_data(x=win_stats.index, y=win_stats['win_percentage'])
         graph.save_plot(plot_name=plot_name)
         graph.show()
