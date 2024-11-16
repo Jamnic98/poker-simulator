@@ -14,6 +14,13 @@ class Card:
         except ValueError as e:
             print(e)
 
+    def serialize(self):
+        return {"face": self.face, "suit": self.suit}
+
+    @classmethod
+    def deserialize(cls, data):
+        return cls(data["face"], data["suit"])
+
     def __repr__(self):
         return str(self.face + CARD_SUIT_ICON_MAP.get(self.suit))
 

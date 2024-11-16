@@ -8,3 +8,5 @@ run.sh
 
 logs.txt
 pre_flop_sim_results.json
+
+results/

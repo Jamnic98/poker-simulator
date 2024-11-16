@@ -1,10 +1,10 @@
-import os
+from os import getcwd, path
 from time import time
 from asyncio import CancelledError
 from typing import List
-import numpy as np
 from pandas import concat, DataFrame
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
 from app.board import Board
 from app.dealer import Dealer
 from app.graph import Graph
@@ -23,42 +23,55 @@ class PokerSimulator:
         self.hand_evaluator = HandEvaluator()
 
     def __reset(self) -> None:
-        """ resets the poker_sim """
+        """Resets the simulation at the end of a run"""
         pass
 
     def __set_players(self, player_count: int) -> List[DummyPlayer]:
-        """ initiates the players """
+        """Initiates the players"""
         if self.mode == Mode.PRE_FLOP_SIM:
             return [DummyPlayer() for _ in range(player_count)]
         return []
 
     def __run_pre_flop_sim(self, n_runs: int = RUN_COUNT) -> None:
-        temp_results = []
-        start_time = time()
+        """Runs pre_flop simulation in concurrent batches"""
+        chunk_size = 10000
+        chunk_number = 0
+        all_results = []
+
         with ProcessPoolExecutor() as executor:
-            chunk_size = 1000
-            for start in range(0, n_runs, chunk_size):
-                end = min(start + chunk_size, n_runs+1)
-                futures = [executor.submit(self._run_single_pre_flop_sim) for _ in range(start, end)]    
-                for run_number, future in enumerate(as_completed(futures), start=1):
+            for start in range(1, n_runs + 1, chunk_size):
+                chunk_number += 1
+                end = min(start + chunk_size, n_runs + 1)
+                futures = [executor.submit(self._run_single_pre_flop_sim) for _ in range(start, end)]
+                temp_results = []
+                start_time = time()
+
+                for chunk_run_number, future in enumerate(as_completed(futures), start=1):
                     try:
                         future_result = future.result()
-                        future_result['run_number'] = run_number
                         temp_results.append(future_result)
-                        if run_number % 1000 == 0:
+
+                        # Periodically save and log
+                        if chunk_run_number % chunk_size == 0:
                             elapsed_time = time() - start_time
-                            print(f'Run: {run_number}, Duration: {elapsed_time:.2f}s')
+                            print(f"Run: {(chunk_number-1)*chunk_size + 1} -> {chunk_number * chunk_size}, Duration: {elapsed_time:.2f}s")
                             start_time = time()
                     except (CancelledError, TimeoutError) as e:
-                        print(f"An error occurred during run {run_number}: {e}")
+                        print(f"An error occurred during run {chunk_run_number}: {e}")
 
-        results = concat(temp_results, ignore_index=True)
-        self.__graph_results(results, 'pre_flop_si m_results')
-        self.__output_results_to_file(results, 'pre_flop_sim_results')
+                # Combine chunk results and save to file
+                chunk_df = concat(temp_results, ignore_index=True)
+                self.__output_chunk_results_to_file(chunk_df, chunk_number)
+                all_results.append(chunk_df)  # Append chunk results for final aggregation
+
+        # Combine all chunks into a single DataFrame for graphing
+        final_results = concat(all_results, ignore_index=True)
+        self.__graph_results(final_results)
         self.running = False
 
     def _run_single_pre_flop_sim(self) -> DataFrame:
-        # init
+        """Runs a single pre_flop simulation"""
+        # init the game state
         board = Board()
         dealer = Dealer()
         players = self.__set_players(self.player_count)
@@ -74,43 +87,45 @@ class PokerSimulator:
         ranked_hands = self.hand_evaluator.rank_hands(board, players)
         for hand in ranked_hands:
             results_list.append({
-                'pocket': hand.cards[:2],
-                'board': hand.cards[2:],
-                'sorted_cards': hand.get_sorted_cards(),
+                'pocket': [card.serialize() for card in hand.get_sorted_cards()[:2]],
+                'board': [card.serialize() for card in hand.cards[2:]],
+                'hand_type': hand.type,
                 'is_winning_hand': hand == ranked_hands[0],
-                'hand_type': hand.type
             })
         return DataFrame(results_list)
 
     @staticmethod
-    def __graph_results(data: DataFrame, plot_name: str = 'example_plot') -> None:
-        """ graphs the winning hand data """
-        df = data
-        # Step 1: Extract starting hand (first two cards) as a tuple
-        df['ordered_starting_hand'] = df['sorted_cards'].map(
-            lambda x: f"{x[0].face + x[0].suit}_{x[1].face + x[1].suit}"
+    def __graph_results(data: DataFrame, plot_name: str = 'pre_flop_results') -> None:
+        """Graphs the winning hand data"""
+        # Extract starting hand (first two cards) as a tuple
+        data['ordered_starting_hand'] = data['pocket'].map(
+            lambda x: f"{x[0]['face']}{x[0]['suit']}_{x[1]['face']}{x[1]['suit']}"
         )
-        # Step 2: Group by starting hand and calculate win percentages
-        win_stats = df.groupby('ordered_starting_hand').agg(
+
+        # Group by starting hand and calculate win percentages
+        win_stats = data.groupby('ordered_starting_hand').agg(
             total_hands=('is_winning_hand', 'count'),
             total_wins=('is_winning_hand', lambda x: (x == True).sum())
         )
-        # Step 3: Calculate win percentage
+
+        # Calculate win percentage
         win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
         win_stats.sort_values('win_percentage', inplace=True, ascending=False)
         print(win_stats)
-        # Step 4: Display the results
-        graph = Graph(title='Pre Flop Sim Results')
+
+        # Display the results
+        graph = Graph(x_label='Starting Hand', y_label='Win %', title='Pre Flop Simulation Results')
         graph.plot_data(x=win_stats.index, y=win_stats['win_percentage'])
-        graph.show()
         graph.save_plot(plot_name=plot_name)
+        graph.show()
 
     @staticmethod
-    def __output_results_to_file(data: DataFrame, file_name: str = 'results') -> None:
-        data.to_json(os.path.join(os.getcwd(), f'{file_name}.json'))
+    def __output_chunk_results_to_file(chunk_data, chunk_number: int) -> None:
+        chunk_file_name = f'pre_flop_sim_chunk_{chunk_number}.json'
+        chunk_data.to_json(path.join(getcwd(), 'results', chunk_file_name), orient='records', lines=True)
 
     def run(self) -> None:
-        """ run the poker simulator as a loop until """
+        """Run the poker sim as a loop until complete"""
         self.running = True
         while self.running:
             if self.mode == Mode.PRE_FLOP_SIM:

@@ -107,3 +107,8 @@ def test_get_sorted_cards():
     ordered_test_hand = Hand([Card('2C'), Card('2H'), Card('KC'), Card('8D'), Card('8S'), Card('3D'), Card('2S')])
     for k, v in enumerate(test_hand.get_sorted_cards()):
         assert v.name == ordered_test_hand.cards[k].name
+    # test 3
+    test_hand = Hand([Card('2H'), Card('2C'), Card('3D'), Card('2S'), Card('8S'), Card('8D'), Card('KC')])
+    ordered_test_hand = Hand([Card('2C'), Card('2H'), Card('KC'), Card('8D'), Card('8S'), Card('3D'), Card('2S')])
+    for k, v in enumerate(test_hand.get_sorted_cards()):
+        assert v.name == ordered_test_hand.cards[k].name

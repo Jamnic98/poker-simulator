@@ -6,7 +6,7 @@ from app.utils.settings import config
 
 
 class Graph:
-    def __init__(self, title, x_label: str='x', y_label: str='y'):
+    def __init__(self, title, x_label, y_label):
         self.title = title
         self.x_label = x_label
         self.y_label = y_label
@@ -26,7 +26,7 @@ class Graph:
     def reset() -> None:
         plt.clf()
 
-    def plot_data(self, x: array, y: array,):
+    def plot_data(self, x: array, y: array):
         # create the graph
         bar_plot = sns.barplot(x=x, y=y)
         bar_plot.plot()
