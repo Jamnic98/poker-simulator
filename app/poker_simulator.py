@@ -1,7 +1,7 @@
 from os import getcwd, path
 from time import time
 from asyncio import CancelledError
-from typing import List
+from typing import List, Tuple
 from numpy import sum as np_sum
 from pandas import concat, DataFrame
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from app.board import Board
 from app.dealer import Dealer
 from app.graph import Graph
-from app.hand.evaluator import HandEvaluator
+from app.hand.hand_evaluator import HandEvaluator
 from app.player import DummyPlayer
 from app.utils.enums import Mode
 
@@ -34,8 +34,8 @@ class PokerSimulator:
 
     def __run_pre_flop_sim(self, n_runs) -> None:
         """Runs pre_flop simulation in concurrent batches"""
-        chunk_size = 10000
         chunk_number = 0
+        chunk_size = 50000
         all_results = []
         start_time = time()
         with ProcessPoolExecutor() as executor:
@@ -52,7 +52,10 @@ class PokerSimulator:
                         # Periodically save and log
                         if chunk_run_number % chunk_size == 0:
                             elapsed_time = time() - chunk_start_time
-                            print(f"Run: {(chunk_number-1)*chunk_size + 1} -> {chunk_number * chunk_size}, Duration: {elapsed_time:.2f}s")
+                            print(
+                                f"Run: {(chunk_number-1)*chunk_size + 1} -> {chunk_number * chunk_size},"
+                                f" Duration: {elapsed_time:.2f}s"
+                            )
                             chunk_start_time = time()
                     except (CancelledError, TimeoutError) as e:
                         print(f"An error occurred during run {chunk_run_number}: {e}")
@@ -86,13 +89,23 @@ class PokerSimulator:
         # create a list of results for each player hand
         results_list = []
         ranked_hands = self.hand_evaluator.rank_hands(board, players)
-        for hand in ranked_hands:
-            results_list.append({
-                'pocket': [card.serialize() for card in hand.get_sorted_cards()[:2]],
-                'board': [card.serialize() for card in hand.cards[2:]],
-                'hand_type': hand.type,
-                'is_winning_hand': hand == ranked_hands[0],
-            })
+
+        for i, hand in enumerate(ranked_hands):
+            if i == 0 and isinstance(hand, Tuple):
+                for player_hand in hand:
+                    results_list.append({
+                        'pocket': [card.serialize() for card in player_hand.get_sorted_cards()[:2]],
+                        'board': [card.serialize() for card in player_hand.cards[2:]],
+                        'hand_type': player_hand.hand_type,
+                        'is_winning_hand': True,
+                    })
+            else:
+                results_list.append({
+                    'pocket': [card.serialize() for card in hand.get_sorted_cards()[:2]],
+                    'board': [card.serialize() for card in hand.cards[2:]],
+                    'hand_type': hand.hand_type,
+                    'is_winning_hand': hand == ranked_hands[0],
+                })
         return DataFrame(results_list)
 
     def __graph_results(self, data: DataFrame, plot_name: str = 'pre_flop_results') -> None:
@@ -111,7 +124,6 @@ class PokerSimulator:
         # Calculate win percentage
         win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
         win_stats.sort_values('win_percentage', inplace=True, ascending=False)
-        print(win_stats)
 
         # Display the results
         graph = Graph(

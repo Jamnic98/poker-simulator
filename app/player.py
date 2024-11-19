@@ -1,24 +1,23 @@
 from typing import List
-from app.card import Card
+from app.card import Card, CardHolder
 
 
 class DummyPlayer:
-    def __init__(self):
-        self.makes_current_player: bool=False
-        self.has_button: bool=False
-        self.winning_hand = None
-        self.pocket: List[Card]=[]
+    def __init__(self, cards: List[Card]=None):
+        self.pocket = cards or []
 
-    def add_cards_to_pocket(self, cards: List[Card]):
-        self.pocket.extend(cards)
+    def add_cards(self, cards: List[Card]):
+        try:
+            if len(cards) + len(self.pocket) > 2:
+                raise  ValueError(f'Unable to add cards {cards}')
+            self.pocket.extend(cards)
+        except ValueError as e:
+            print(e)
 
     def make_move(self):
         pass
 
     def reset(self):
-        self.makes_current_player = False
-        self.has_button = False
-        self.winning_hand = None
         self.pocket.clear()
 
 
