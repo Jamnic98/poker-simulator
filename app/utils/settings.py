@@ -4,6 +4,9 @@ from os import getcwd, path
 
 # use('Agg')
 
+cwd  = getcwd()
+
 config = {
-    "GRAPH_OUTPUT_DIR": path.join(getcwd(), 'images', 'graphs')
+    "GRAPH_OUTPUT_DIR": path.join(cwd, 'images', 'graphs'),
+    "RESULTS_DIR": path.join(cwd, 'results')
 }

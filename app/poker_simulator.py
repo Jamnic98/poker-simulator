@@ -1,4 +1,5 @@
-from os import getcwd, path
+from os import getcwd, makedirs, path
+from datetime import datetime
 from time import time
 from asyncio import CancelledError
 from typing import List, Tuple
@@ -12,10 +13,12 @@ from app.graph import Graph
 from app.hand.hand_evaluator import HandEvaluator
 from app.player import DummyPlayer
 from app.utils.enums import Mode
+from app.utils.settings import config
 
 
 class PokerSimulator:
     def __init__(self, mode: Mode, run_count: int, player_count: int = 2):
+        self.run_start_time = None
         self.mode: Mode = mode
         self.run_count = run_count
         self.player_count = player_count
@@ -43,12 +46,12 @@ class PokerSimulator:
                 end = min(start + chunk_size, n_runs + 1)
                 futures = [executor.submit(self._run_single_pre_flop_sim) for _ in range(start, end)]
                 chunk_number += 1
-                temp_results = []
+                chunk_results = []
                 chunk_start_time = time()
                 for chunk_run_number, future in enumerate(as_completed(futures), start=1):
                     try:
                         future_result = future.result()
-                        temp_results.append(future_result)
+                        chunk_results.append(future_result)
                         # Periodically save and log
                         if chunk_run_number % chunk_size == 0:
                             elapsed_time = time() - chunk_start_time
@@ -61,10 +64,10 @@ class PokerSimulator:
                         print(f"An error occurred during run {chunk_run_number}: {e}")
 
                 # combine chunk results and save to file
-                chunk_df = concat(temp_results, ignore_index=True)
-                all_results.append(chunk_df)
+                chunk_results_df = concat(chunk_results, ignore_index=True)
+                all_results.append(chunk_results_df)
                 # save chunk data to file
-                # self.__output_chunk_results_to_file(chunk_df, chunk_number)
+                self.__output_chunk_results_to_file(chunk_results_df, chunk_number)
 
         # output final results
         print(f'Total Run Duration: {(time() - start_time):.2f}s')
@@ -135,13 +138,18 @@ class PokerSimulator:
         graph.save_plot(plot_name=plot_name)
         graph.show()
 
-    @staticmethod
-    def __output_chunk_results_to_file(chunk_data, chunk_number: int) -> None:
+    def __output_chunk_results_to_file(self, chunk_data: DataFrame, chunk_number: int) -> None:
         chunk_file_name = f'pre_flop_sim_chunk_{chunk_number}.json'
-        chunk_data.to_json(path.join(getcwd(), 'results', chunk_file_name), orient='records', lines=True)
+        chunks_dir = path.join(config.get('RESULTS_DIR'), self.run_start_time)
+        if not path.isdir(chunks_dir):
+            makedirs(chunks_dir, exist_ok=True)
+        chunk_file_path = path.join(chunks_dir, chunk_file_name)
+        chunk_data.to_json(chunk_file_path, orient='records', lines=True)
+        print(f'Saved chunk to file: {chunk_file_name}')
 
     def run(self) -> None:
         """Run the poker sim as a loop until complete"""
+        self.run_start_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.running = True
         while self.running:
             if self.mode == Mode.PRE_FLOP_SIM:
