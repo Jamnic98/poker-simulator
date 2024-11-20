@@ -12,7 +12,7 @@ class Graph:
         self.y_label = y_label
 
     @staticmethod
-    def save_plot(plot_name, output_directory: str=config['GRAPH_OUTPUT_DIR']) -> None:
+    def save_plot(plot_name, output_directory: str=config['GRAPHS_DIR']) -> None:
         """ save graph as image to a specified directory """
         if not path.exists(output_directory):
             makedirs(output_directory)

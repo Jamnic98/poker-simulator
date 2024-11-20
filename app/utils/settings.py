@@ -1,12 +1,14 @@
 from os import getcwd, path
-# from matplotlib import use
+from matplotlib import use
 
 
-# use('Agg')
+use('Agg')
 
 cwd  = getcwd()
 
 config = {
-    "GRAPH_OUTPUT_DIR": path.join(cwd, 'images', 'graphs'),
-    "RESULTS_DIR": path.join(cwd, 'results')
+    "GRAPHS_DIR": path.join(cwd, 'images', 'graphs'),
+    "RESULTS_DIR": path.join(cwd, 'results'),
+    "LOG_DIR": path.join(cwd, 'logs'),
+    "TOP_CARDS_COUNT": 10
 }

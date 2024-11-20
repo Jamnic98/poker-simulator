@@ -43,12 +43,12 @@ class Hand(CardHolder):
     def get_hand_type(self) -> (PokerHand, Tuple[Card], Tuple[Card], str or None):
         """Returns a tuple: (PokerHand, <main_cards>, <kicker_cards>, <main_suit> if applicable)."""
         if not self.cards:
-            return None, [], [], None
+            return None, (), (), None
         # Check for hands in decreasing rank
         if self.makes_royal_flush():
             main_suit = self.get_flush_suit()
             main_cards = self.get_main_cards(main_suit, is_royal_flush=True)
-            return PokerHand.ROYAL_FLUSH, main_cards, [], main_suit
+            return PokerHand.ROYAL_FLUSH, main_cards, (), main_suit
         elif self.makes_straight_flush():
             main_suit = self.get_flush_suit()
             main_cards, kickers = self.get_main_cards(main_suit, is_flush=True, is_straight=True)
@@ -62,7 +62,7 @@ class Hand(CardHolder):
         elif self.makes_flush():
             main_suit = self.get_flush_suit()
             main_cards = self.get_main_cards(main_suit, is_flush=True)
-            return PokerHand.FLUSH, main_cards, [], main_suit
+            return PokerHand.FLUSH, main_cards, (), main_suit
         elif self.makes_straight():
             main_cards, kickers = self.get_main_cards(is_straight=True)
             return PokerHand.STRAIGHT, main_cards, kickers, None
@@ -78,11 +78,11 @@ class Hand(CardHolder):
         else:
             # High card
             sorted_cards = self.get_sorted_cards()
-            main_cards = [sorted_cards[0]]
+            main_cards = sorted_cards[0]
             kickers = sorted_cards[1:5]
-            return PokerHand.HIGH_CARD, main_cards, kickers, None
+            return PokerHand.HIGH_CARD, main_cards, tuple(kickers), None
 
-    def get_flush_suit(self):
+    def get_flush_suit(self) -> str:
         suit_count = {}
         # Count the number of cards for each suit
         for card in self.cards:
@@ -90,10 +90,12 @@ class Hand(CardHolder):
         # Find suits with at least 5 cards
         flush_suits = [suit for suit, count in suit_count.items() if count >= 5]
         if not flush_suits:
-            return None  # No flush found
+            # No flush found
+            return None
 
         if len(flush_suits) == 1:
-            return flush_suits[0]  # Return the single flush suit
+            # Return the single flush suit
+            return flush_suits[0]
 
         # If multiple flush suits, choose the one with the highest-ranking cards
         # Build a dictionary of suited cards
@@ -151,10 +153,8 @@ class Hand(CardHolder):
             face_counts[card.face] = face_counts.get(card.face, 0) + 1
 
         main_cards = [card for card in self.cards if face_counts[card.face] == x]
-        kickers = [card for card in self.cards if face_counts[card.face] < x]
-        kickers = sorted(kickers, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)
-
-        return sorted(main_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True), kickers[:5 - x]
+        kickers = sorted([card for card in self.cards if face_counts[card.face] < x], key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)
+        return tuple(sorted(main_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)), tuple(kickers[:5 - x]) 
 
     def get_full_house_main_and_kickers(self):
         """Returns main cards and kickers for a full house."""
@@ -167,11 +167,11 @@ class Hand(CardHolder):
         pair_faces = [face for face, count in face_counts.items() if count == 2]
 
         if not three_of_a_kind_faces or not pair_faces:
-            return [], []
+            return (), ()
 
         # Get main cards
         main_cards = [card for card in self.cards if card.face in (three_of_a_kind_faces[0], pair_faces[0])]
-        return sorted(main_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True), []
+        return tuple(sorted(main_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)), ()
 
     def get_two_pair_main_and_kickers(self):
         value_counts = {}
@@ -183,7 +183,7 @@ class Hand(CardHolder):
         sorted_pairs = sorted(pairs, key=lambda p: CARD_FACE_VALUE_MAP[p[0].face], reverse=True)
 
         if len(sorted_pairs) < 2:
-            return [], []  # Not enough pairs for two-pair hand
+            return (), ()
 
         # Get the two highest pairs
         main_cards = sorted_pairs[0][:2] + sorted_pairs[1][:2]
@@ -194,7 +194,7 @@ class Hand(CardHolder):
         sorted_kickers = sorted(kicker_candidates, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)
 
         # Return main cards and a single kicker
-        return main_cards, sorted_kickers[:1]
+        return tuple(main_cards), tuple(sorted_kickers[:1])
 
     def makes_royal_flush(self) -> bool:
         """Returns True if it is possible to make a royal flush."""
@@ -217,7 +217,7 @@ class Hand(CardHolder):
     def makes_straight_flush(self) -> bool:
         if len(self.cards) < 5:
             return False
-        # arrange cards by suit
+        # Arrange cards by suit
         suits = {}
         for card in self.cards:
             if card.suit not in suits:
@@ -229,13 +229,13 @@ class Hand(CardHolder):
             else:
                 suits[card.suit].append(card_value)
 
-        # test each suit for a straight
+        # Test each suit for a straight
         for suit, ranks in suits.items():
             if len(ranks) < 5:
                 continue
-            # sort and remove duplicates
+            # Sort and remove duplicates
             sorted_ranks = sorted(set(ranks))
-            # check for a sequence of 5 consecutive ranks
+            # Check for a sequence of 5 consecutive ranks
             for i in range(len(sorted_ranks) - 4):
                 if sorted_ranks[i + 4] - sorted_ranks[i] == 4:
                     return True
@@ -249,21 +249,21 @@ class Hand(CardHolder):
         """Returns True if it is possible to make a full house."""
         if len(self.cards) < 5:
             return False
-        # arrange cards by face
+        # Arrange cards by face
         face_dict = {}
         for card in self.cards:
             face_dict.setdefault(card.face, []).append(card)
-        # count the number of faces that have exactly 3 and exactly 2 cards
+        # Count the number of faces that have exactly 3 and exactly 2 cards
         pair = sum(1 for cards in face_dict.values() if len(cards) == 2)
         three_of_a_kind = sum(1 for cards in face_dict.values() if len(cards) == 3)
-        # test for a three-of-a-kind and one pair
+        # Test for a three-of-a-kind and one pair
         return three_of_a_kind > 0 and pair > 0
 
     def makes_flush(self) -> bool:
         """Returns True if it is possible to make a flush."""
         if len(self.cards) < 5:
             return False
-        # collect suits and map to occurrence count
+        # Collect suits and map to occurrence count
         suit_count = {}
         for card in self.cards:
             suit_count[card.suit] = suit_count.get(card.suit, 0) + 1
@@ -275,18 +275,18 @@ class Hand(CardHolder):
         """Returns True if it is possible to make a straight."""
         if len(self.cards) < 5:
             return False
-        # collect unique rank values
+        # Collect unique rank values
         rank_values = set()
         for card in self.cards:
             card_value = CARD_FACE_VALUE_MAP.get(card.face)
-            # handle aces dual values (14, 1)
+            # Handle aces dual values (14, 1)
             if card.face == 'A':
                 rank_values.update((card_value, 1))
             else:
                 rank_values.add(card_value)
-        # sort the unique ranks to check for consecutive sequences
+        # Sort the unique ranks to check for consecutive sequences
         sorted_ranks = sorted(rank_values)
-        # check for any sequence of 5 consecutive ranks
+        # Check for any sequence of 5 consecutive ranks
         for i in range(len(sorted_ranks) - 4):
             if sorted_ranks[i + 4] - sorted_ranks[i] == 4:
                 return True
@@ -300,14 +300,14 @@ class Hand(CardHolder):
         """Returns True if it is possible to make two pairs."""
         if len(self.cards) < 4:
             return False
-        # map card faces in cards to the number of occurrences
+        # Map card faces in cards to the number of occurrences
         pair_count = 0
         face_count_map = {}
         for card in self.cards:
             face_count_map[card.face] = face_count_map.get(card.face, 0) + 1
             if face_count_map[card.face] == 2:
                 pair_count += 1
-                # stop early once 2 pairs found
+                # Stop early once 2 pairs found
                 if pair_count == 2:
                     return True
         return False

@@ -3,7 +3,6 @@ from datetime import datetime
 from time import time
 from asyncio import CancelledError
 from typing import List, Tuple
-from numpy import sum as np_sum
 from pandas import concat, DataFrame
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -14,6 +13,9 @@ from app.hand.hand_evaluator import HandEvaluator
 from app.player import DummyPlayer
 from app.utils.enums import Mode
 from app.utils.settings import config
+
+
+top_cards_count = config['TOP_CARDS_COUNT']
 
 
 class PokerSimulator:
@@ -38,7 +40,7 @@ class PokerSimulator:
     def __run_pre_flop_sim(self, n_runs) -> None:
         """Runs pre_flop simulation in concurrent batches"""
         chunk_number = 0
-        chunk_size = 50000
+        chunk_size = 10000
         all_results = []
         start_time = time()
         with ProcessPoolExecutor() as executor:
@@ -52,6 +54,7 @@ class PokerSimulator:
                     try:
                         future_result = future.result()
                         chunk_results.append(future_result)
+                        
                         # Periodically save and log
                         if chunk_run_number % chunk_size == 0:
                             elapsed_time = time() - chunk_start_time
@@ -64,77 +67,116 @@ class PokerSimulator:
                         print(f"An error occurred during run {chunk_run_number}: {e}")
 
                 # combine chunk results and save to file
-                chunk_results_df = concat(chunk_results, ignore_index=True)
+                chunk_results_df = concat(chunk_results, axis=0)
                 all_results.append(chunk_results_df)
                 # save chunk data to file
-                self.__output_chunk_results_to_file(chunk_results_df, chunk_number)
+                # self.__output_chunk_results_to_file(chunk_results_df, chunk_number)
 
-        # output final results
+        # Output final results
         print(f'Total Run Duration: {(time() - start_time):.2f}s')
         # Combine all chunks into a single DataFrame for graphing
-        final_results = concat(all_results, ignore_index=True)
+        final_results = concat(all_results, axis=0)
         self.__graph_results(final_results)
         self.running = False
 
     def _run_single_pre_flop_sim(self) -> DataFrame:
         """Runs a single pre_flop simulation"""
-        # init the game state
+        # Init the game state
         board = Board()
         dealer = Dealer()
         players = self.__set_players(self.player_count)
-        # shuffle and deal pre-flop cards to players
+        # Shuffle and deal pre-flop cards to players
         dealer.shuffle_cards()
         dealer.deal_starting_cards(players)
-        # deal flop, turn and river
+        # Deal flop, turn and river
         dealer.deal_flop(board)
         dealer.deal_turn_or_river(board)
         dealer.deal_turn_or_river(board)
-        # create a list of results for each player hand
-        results_list = []
+        # Create a list of results for each player hand
+        hand_results = []
         ranked_hands = self.hand_evaluator.rank_hands(board, players)
 
+        def create_result_entry(player_hand, is_winning_hand):
+            return {
+                'pocket': tuple(card.token for card in player_hand.get_sorted_cards()[:2]),
+                'board': tuple(card.token for card in player_hand.cards[2:]),
+                'hand_type': player_hand.hand_type,
+                'is_winning_hand': is_winning_hand,
+            }
+
+        # Iterate through ranked hands
         for i, hand in enumerate(ranked_hands):
             if i == 0 and isinstance(hand, Tuple):
+                # Handle the tuple of hands (e.g., tie case)
                 for player_hand in hand:
-                    results_list.append({
-                        'pocket': [card.serialize() for card in player_hand.get_sorted_cards()[:2]],
-                        'board': [card.serialize() for card in player_hand.cards[2:]],
-                        'hand_type': player_hand.hand_type,
-                        'is_winning_hand': True,
-                    })
+                    hand_results.append(create_result_entry(player_hand, is_winning_hand=True))
             else:
-                results_list.append({
-                    'pocket': [card.serialize() for card in hand.get_sorted_cards()[:2]],
-                    'board': [card.serialize() for card in hand.cards[2:]],
-                    'hand_type': hand.hand_type,
-                    'is_winning_hand': hand == ranked_hands[0],
-                })
-        return DataFrame(results_list)
+                # Handle individual hands
+                is_winning_hand = hand == ranked_hands[0]
+                hand_results.append(create_result_entry(hand, is_winning_hand))
+
+        df = DataFrame(hand_results)
+        df.set_index(['board', 'pocket'], inplace=True)
+        return df
 
     def __graph_results(self, data: DataFrame, plot_name: str = 'pre_flop_results') -> None:
         """Graphs the winning hand data"""
-        # Extract starting hand (first two cards) as a tuple
-        data['ordered_starting_hand'] = data['pocket'].map(
-            lambda x: f"{x[0]}_{x[-1]}"
-        )
+        # Reset the MultiIndex to make the 'pocket' a regular column
+        data_reset = data.reset_index()
 
-        # Group by starting hand and calculate win percentages
-        win_stats = data.groupby('ordered_starting_hand').agg(
+        # Ensure that 'pocket' is represented as a string for each hand combination
+        data_reset['ordered_pocket'] = data_reset['pocket'].map(lambda x: f"{x[0]}_{x[1]}")
+
+        # Group by the 'ordered_pocket' to calculate win statistics
+        win_stats = data_reset.groupby('ordered_pocket').agg(
             total_hands=('is_winning_hand', 'count'),
-            total_wins=('is_winning_hand', lambda x: np_sum(x))
+            total_wins=('is_winning_hand', 'sum')
         )
 
-        # Calculate win percentage
+        # Calculate the win percentage
         win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
-        win_stats.sort_values('win_percentage', inplace=True, ascending=False)
+
+        # Sort the data by win percentage
+        win_stats.sort_values('win_percentage', ascending=False, inplace=True)
+
+        
+        # # Ensure 'ordered_starting_hand' is a simple, sortable label for plotting
+        # win_stats['ordered_starting_hand'] = win_stats.index.get_level_values('pocket').map(lambda x: f"{x[0]}_{x[1]}")
+
+        # # You may want to reset the index to make the data easier to plot
+        # win_stats_reset = win_stats.reset_index()
+        # # Now you can plot
+        # x = win_stats_reset['ordered_starting_hand']
+        # y = win_stats_reset['win_percentage']
+
+        # data['ordered_starting_hand'] = data['pocket'].map(
+        #     lambda x: tuple(sorted(x, reverse=True))  # Example: Sort cards
+        # )
+        
+        # # Group by starting hand and calculate win percentages
+        # win_stats = data.groupby('ordered_starting_hand').agg(
+        #     total_hands=('is_winning_hand', 'count'),
+        #     total_wins=('is_winning_hand', 'sum')
+        # )
+
+        # # Calculate win percentage
+        # win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
+        # win_stats.sort_values('win_percentage', inplace=True, ascending=False)
 
         # Display the results
         graph = Graph(
             x_label='Starting Hand',
             y_label='Win %',
-            title=f'Pre-flop Simulation Results @ {self.run_count:.0E} runs w/ {self.player_count} players'
+            title=f'Pre-flop Simulation Results @ {self.run_count:.0E} runs w/ {self.player_count} players' + f' {f'Top {top_cards_count} Cards' if top_cards_count else ''}'
         )
-        graph.plot_data(x=win_stats.index, y=win_stats['win_percentage'])
+
+        x = win_stats.index
+        y = win_stats['win_percentage']
+        if top_cards_count:
+            x = x[:top_cards_count]
+            y = y[:top_cards_count]
+
+        graph.plot_data(x=x, y=y)
         graph.save_plot(plot_name=plot_name)
         graph.show()
 

@@ -8,6 +8,7 @@ class Card:
         try:
             if face not in FACES or suit not in SUITS:
                 raise ValueError(f'Invalid token: {token}')
+            self.token = token
             self.face: str = face
             self.suit: str = suit
             self.name: str = self.__set_name()

@@ -1,5 +1,5 @@
 PLAYER_COUNT = 2
-RUN_COUNT = int(20e6)
+RUN_COUNT = int(1e5)
 
 
 CARD_FACE_VALUE_MAP = {

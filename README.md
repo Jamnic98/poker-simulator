@@ -55,8 +55,6 @@ For example:
 3. Install the dependencies:
     ```pip install -r requirements.txt```
 
-4. Create a directory for simulation results:
-   ```mkdir results```
 
 ## Usage
 1. Run the simulator:
@@ -64,7 +62,7 @@ For example:
 
 2. The simulator outputs:
    - Progress logs during simulation.
-   - Chunked results as JSON files in the results/ folder.
+   - Chunked results as JSON files in the created results/ folder.
    - A graphical visualisation of pre-flop win percentages.
 
 
