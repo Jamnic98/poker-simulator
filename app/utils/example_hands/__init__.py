@@ -10,7 +10,7 @@ from .pair import *
 from .high_card import *
 
 
-empty_hand = Hand()
+empty_hand = Hand([])
 
 single_card = Hand([
     Card('AS'),

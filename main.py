@@ -1,13 +1,17 @@
+import argparse
+from sys import argv
 from app.poker_simulator import PokerSimulator
-from app.utils.constants import PLAYER_COUNT, RUN_COUNT
 from app.utils.enums import Mode
+from app.utils.arg_parser import parse_arguments
+from app.settings import config
 
 
 def main():
+    arguments = parse_arguments()
     poker_simulator = PokerSimulator(
         mode=Mode.PRE_FLOP_SIM,
-        run_count=RUN_COUNT,
-        player_count=PLAYER_COUNT
+        player_count=arguments.players,
+        run_count=arguments.runs,
     )
     poker_simulator.run()
 

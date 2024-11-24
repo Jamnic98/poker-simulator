@@ -1,11 +1,11 @@
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 from app.card import Card, CardHolder
 from app.utils.enums import PokerHand
 from app.utils.constants import CARD_FACE_VALUE_MAP
 
 
 class Hand(CardHolder):
-    def __init__(self, cards: Optional[List[Card]]=None):
+    def __init__(self, cards: List[Card]=None):
         super().__init__(cards)
         self.hand_type = None
         try:
@@ -15,8 +15,7 @@ class Hand(CardHolder):
                 raise ValueError
             self.hand_type = self.get_hand_type()
         except ValueError as e:
-            self.reset()
-            print(e)
+            print(f'Init hand failed: {e}')
 
     def __makes_x_of_a_kind(self, x: int) -> bool:
         """returns true if x number of occurrences of a card face in hand"""
@@ -38,7 +37,7 @@ class Hand(CardHolder):
                     raise ValueError
                 self.cards.extend(cards)
             except ValueError as e:
-                print(e)
+                print(f'Error adding cards to hand {e}')
 
     def get_hand_type(self) -> (PokerHand, Tuple[Card], Tuple[Card], str or None):
         """Returns a tuple: (PokerHand, <main_cards>, <kicker_cards>, <main_suit> if applicable)."""
@@ -47,8 +46,8 @@ class Hand(CardHolder):
         # Check for hands in decreasing rank
         if self.makes_royal_flush():
             main_suit = self.get_flush_suit()
-            main_cards = self.get_main_cards(main_suit, is_royal_flush=True)
-            return PokerHand.ROYAL_FLUSH, main_cards, (), main_suit
+            main_cards, kickers = self.get_main_cards(main_suit, is_royal_flush=True)
+            return PokerHand.ROYAL_FLUSH, main_cards, kickers, main_suit
         elif self.makes_straight_flush():
             main_suit = self.get_flush_suit()
             main_cards, kickers = self.get_main_cards(main_suit, is_flush=True, is_straight=True)
@@ -61,8 +60,8 @@ class Hand(CardHolder):
             return PokerHand.FULL_HOUSE, main_cards, kickers, None
         elif self.makes_flush():
             main_suit = self.get_flush_suit()
-            main_cards = self.get_main_cards(main_suit, is_flush=True)
-            return PokerHand.FLUSH, main_cards, (), main_suit
+            main_cards, kickers = self.get_main_cards(main_suit, is_flush=True)
+            return PokerHand.FLUSH, main_cards, kickers, main_suit
         elif self.makes_straight():
             main_cards, kickers = self.get_main_cards(is_straight=True)
             return PokerHand.STRAIGHT, main_cards, kickers, None
@@ -78,11 +77,11 @@ class Hand(CardHolder):
         else:
             # High card
             sorted_cards = self.get_sorted_cards()
-            main_cards = sorted_cards[0]
-            kickers = sorted_cards[1:5]
-            return PokerHand.HIGH_CARD, main_cards, tuple(kickers), None
+            main_cards = tuple([sorted_cards[0]])
+            kickers = tuple(sorted_cards[1:5])
+            return PokerHand.HIGH_CARD, main_cards, kickers, None
 
-    def get_flush_suit(self) -> str:
+    def get_flush_suit(self) -> str or None:
         suit_count = {}
         # Count the number of cards for each suit
         for card in self.cards:
@@ -109,41 +108,47 @@ class Hand(CardHolder):
                               key=lambda s: CARD_FACE_VALUE_MAP[flush_candidates[s][0].face])
         return best_flush_suit
 
-    def get_main_cards(self, main_suit=None, is_flush=False, is_straight=False, is_royal_flush=False) -> Tuple[Tuple, Tuple]:
-        # Handle Flush and Royal Flush
-        if is_flush or is_royal_flush:
+    def get_main_cards(self, main_suit=None, is_flush=False, is_straight=False, is_royal_flush=False) -> Tuple:
+        # Handle Royal Flush
+        if is_royal_flush:
             suited_cards = [card for card in self.cards if card.suit == main_suit]
-            sorted_suited_cards = sorted(suited_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)
-            return tuple(sorted_suited_cards[:5]), ()
+            sorted_suited_cards = sorted(suited_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face], reverse=True)[:5]
+            return tuple(sorted_suited_cards), ()
+
+        # Handle Flush (only when not part of a straight)
+        if is_flush and not is_straight:
+            suited_cards = [card for card in self.cards if card.suit == main_suit]
+            sorted_suited_cards = sorted(suited_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face], reverse=True)
+            return tuple(sorted_suited_cards), ()
 
         # Handle Straight
         if is_straight:
-            # Extract unique face values, accounting for Ace as both high and low
-            sorted_cards = sorted(self.cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)
-            unique_faces = list({CARD_FACE_VALUE_MAP[c.face]: c for c in sorted_cards}.values())
-            ace_low_hand = False
+            # Filter by suit if flush is also present
+            suited_cards = [card for card in self.cards if card.suit == main_suit] if is_flush else self.cards
 
-            # Check for a straight sequence
+            # Extract unique face values, accounting for Ace as both high and low
+            sorted_cards = sorted(suited_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)
+            unique_faces = list({CARD_FACE_VALUE_MAP[card.face]: card for card in sorted_cards}.values())
+
+            # Find the straight sequence
             straight_cards = []
             for i in range(len(unique_faces) - 4):
                 potential_straight = unique_faces[i:i + 5]
-                if all(
-                        CARD_FACE_VALUE_MAP[potential_straight[j].face] -
-                        CARD_FACE_VALUE_MAP[potential_straight[j + 1].face] == 1
-                        for j in range(4)
-                ):
+                if all(CARD_FACE_VALUE_MAP[potential_straight[j].face] - CARD_FACE_VALUE_MAP[
+                    potential_straight[j + 1].face] == 1 for j in range(4)):
                     straight_cards = potential_straight
                     break
 
-            # Special case: Ace-low straight (e.g., A-2-3-4-5)
-            if not straight_cards and unique_faces[-1].face == '2' and unique_faces[0].face == 'A':
-                ace_low_hand = True
-                straight_cards = [unique_faces[-1], *unique_faces[-4:]]  # Order A-5 ascending
+            # Special case: Ace-low straight (A-2-3-4-5)
+            if not straight_cards and 'A' in [card.face for card in unique_faces] and '2' in [card.face for card in
+                                                                                              unique_faces]:
+                ace = next(card for card in unique_faces if card.face == 'A')
+                low_cards = [card for card in unique_faces if CARD_FACE_VALUE_MAP[card.face] <= 5 and card.face != 'A']
+                straight_cards = [ace] + sorted(low_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face])
 
             if straight_cards:
                 return tuple(straight_cards), ()
 
-        # Default case for non-matching scenarios
         return (), ()
 
     def get_x_of_a_kind_main_and_kickers(self, x: int):
@@ -154,7 +159,7 @@ class Hand(CardHolder):
 
         main_cards = [card for card in self.cards if face_counts[card.face] == x]
         kickers = sorted([card for card in self.cards if face_counts[card.face] < x], key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)
-        return tuple(sorted(main_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)), tuple(kickers[:5 - x]) 
+        return tuple(sorted(main_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)), tuple(kickers[:5 - x])
 
     def get_full_house_main_and_kickers(self):
         """Returns main cards and kickers for a full house."""
@@ -162,16 +167,34 @@ class Hand(CardHolder):
         for card in self.cards:
             face_counts[card.face] = face_counts.get(card.face, 0) + 1
 
-        # Identify the three of a kind and pair
-        three_of_a_kind_faces = [face for face, count in face_counts.items() if count == 3]
-        pair_faces = [face for face, count in face_counts.items() if count == 2]
+        # Identify the three-of-a-kind and pair
+        three_of_a_kind_faces = sorted(
+            [face for face, count in face_counts.items() if count >= 3],
+            key=lambda face: CARD_FACE_VALUE_MAP[face],
+            reverse=True
+        )
+        pair_faces = sorted(
+            [face for face, count in face_counts.items() if count >= 2 and face not in three_of_a_kind_faces],
+            key=lambda face: CARD_FACE_VALUE_MAP[face],
+            reverse=True
+        )
 
+        # Ensure both three-of-a-kind and pair are present
         if not three_of_a_kind_faces or not pair_faces:
             return (), ()
 
-        # Get main cards
-        main_cards = [card for card in self.cards if card.face in (three_of_a_kind_faces[0], pair_faces[0])]
-        return tuple(sorted(main_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)), ()
+        # Select the strongest full house (highest three-of-a-kind, then highest pair)
+        three_of_a_kind_face = three_of_a_kind_faces[0]
+        pair_face = pair_faces[0]
+
+        # Get main cards (three-of-a-kind)
+        main_cards = [card for card in self.cards if card.face == three_of_a_kind_face][:3]
+
+        # Get kickers (pair)
+        kickers = [card for card in self.cards if card.face == pair_face][:2]
+
+        return tuple(sorted(main_cards, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True)), \
+            tuple(sorted(kickers, key=lambda c: CARD_FACE_VALUE_MAP[c.face], reverse=True))
 
     def get_two_pair_main_and_kickers(self):
         value_counts = {}
@@ -217,28 +240,33 @@ class Hand(CardHolder):
     def makes_straight_flush(self) -> bool:
         if len(self.cards) < 5:
             return False
-        # Arrange cards by suit
+
+        # Dictionary to track ranks for each suit
         suits = {}
+
+        # Populate the dictionary
         for card in self.cards:
             if card.suit not in suits:
-                suits[card.suit] = []
-            card_value = CARD_FACE_VALUE_MAP.get(card.face)
-            # update suits map and handle aces dual values (14, 1)
+                suits[card.suit] = set()
+            card_value = CARD_FACE_VALUE_MAP[card.face]
+            suits[card.suit].add(card_value)
             if card.face == 'A':
-                suits[card.suit].extend([card_value, 1])
-            else:
-                suits[card.suit].append(card_value)
+                suits[card.suit].add(1)  # Add Ace-low value
 
-        # Test each suit for a straight
+        # Check for straight flush in each suit
         for suit, ranks in suits.items():
             if len(ranks) < 5:
                 continue
-            # Sort and remove duplicates
-            sorted_ranks = sorted(set(ranks))
-            # Check for a sequence of 5 consecutive ranks
-            for i in range(len(sorted_ranks) - 4):
-                if sorted_ranks[i + 4] - sorted_ranks[i] == 4:
-                    return True
+            sorted_ranks = sorted(ranks)
+            consecutive_count = 1
+            for i in range(1, len(sorted_ranks)):
+                if sorted_ranks[i] == sorted_ranks[i - 1] + 1:
+                    consecutive_count += 1
+                    if consecutive_count == 5:
+                        return True
+                else:
+                    consecutive_count = 1
+
         return False
 
     def makes_four_of_a_kind(self) -> bool:
@@ -246,18 +274,27 @@ class Hand(CardHolder):
         return self.__makes_x_of_a_kind(x=4)
 
     def makes_full_house(self) -> bool:
-        """Returns True if it is possible to make a full house."""
         if len(self.cards) < 5:
             return False
-        # Arrange cards by face
-        face_dict = {}
+
+        face_counts = {}
         for card in self.cards:
-            face_dict.setdefault(card.face, []).append(card)
-        # Count the number of faces that have exactly 3 and exactly 2 cards
-        pair = sum(1 for cards in face_dict.values() if len(cards) == 2)
-        three_of_a_kind = sum(1 for cards in face_dict.values() if len(cards) == 3)
-        # Test for a three-of-a-kind and one pair
-        return three_of_a_kind > 0 and pair > 0
+            face_counts[card.face] = face_counts.get(card.face, 0) + 1
+
+        has_three_of_a_kind = False
+        has_pair = False
+
+        for count in face_counts.values():
+            if count >= 3 and not has_three_of_a_kind:
+                has_three_of_a_kind = True
+                count -= 3  # Simulate using one three-of-a-kind
+            if count >= 2:
+                has_pair = True
+
+            if has_three_of_a_kind and has_pair:
+                return True
+
+        return False
 
     def makes_flush(self) -> bool:
         """Returns True if it is possible to make a flush."""
@@ -322,9 +359,8 @@ class Hand(CardHolder):
             return self.cards
         def sort_cards(cards: List[Card]):
             return sorted(
-                    sorted(cards, key=lambda c: c.suit),
-                    key=lambda c: CARD_FACE_VALUE_MAP.get(c.face), reverse=True
-                )
+                    sorted(cards, key=lambda c: c.suit), key=lambda c: CARD_FACE_VALUE_MAP.get(c.face), reverse=True
+            )
         return sort_cards(self.cards[:2].copy()) + sort_cards(self.cards[2:].copy())
 
     def reset(self) -> None:
@@ -336,10 +372,3 @@ class Hand(CardHolder):
 class Pocket(Hand):
     def __init__(self):
         super().__init__()
-        self.win_percentage = 0
-        self.tie_percentage = 0
-
-    def __repr__(self):
-        return f'Cards: {self.cards}\n' \
-            f'Win %: {self.win_percentage}\n' \
-            f'Tie %: {self.tie_percentage}\n'

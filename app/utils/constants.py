@@ -1,7 +1,3 @@
-PLAYER_COUNT = 2
-RUN_COUNT = int(1e5)
-
-
 CARD_FACE_VALUE_MAP = {
     '2': 2,
     '3': 3,

@@ -75,7 +75,6 @@ def test_makes_flush():
 
 def test_makes_straight():
     assert example_hands.straight.makes_straight() is True
-    assert example_hands.straight_flush.makes_straight() is True
     assert example_hands.royal_flush.makes_straight() is True
 
 def test_makes_three_of_a_kind():

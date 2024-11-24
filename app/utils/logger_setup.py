@@ -1,7 +1,7 @@
 import logging
 from os import path, makedirs
 from datetime import datetime
-from .settings import config
+from app.settings import config
 
 
 # Create a logs folder if it doesn't exist

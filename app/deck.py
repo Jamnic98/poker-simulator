@@ -1,5 +1,5 @@
 from typing import List
-from random import shuffle
+from random import shuffle, choice
 from app.card import Card
 from app.utils.constants import FACES, SUITS
 
@@ -17,7 +17,9 @@ class Deck:
         return cards
 
     def shuffle(self) -> None:
-        shuffle(self.cards)
+        shuffle_count = choice(range(2, 5))
+        for _ in range(shuffle_count):
+            shuffle(self.cards)
 
     def reset(self) -> None:
         self.cards = self.__class__.generate_cards()

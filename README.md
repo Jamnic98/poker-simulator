@@ -15,26 +15,12 @@ The **Poker Simulator** is a Python-based tool designed to simulate poker hands 
 ## Table of Contents
 
 - [Installation](#installation)
-- [Configuration](#configuration)
+- [Configuration](#command-line-configuration)
 - [Usage](#usage)
 - [Simulation Details](#simulation-details)
 - [Licence](#licence)
 
 ---
-
-## Configuration
-To customise the simulation, you can update the constants in the `app/utils/constants.py` file:
-
-- **`PLAYER_COUNT`**: Change the number of players in the game.  
-- **`RUN_COUNT`**: Set the number of simulation runs.
-
-For example:
-    ```python
-    # app/utils/constants.py
-    PLAYER_COUNT = 6  # Number of players in the game
-    RUN_COUNT = 100000  # Total number of simulation runs
-    ```
-
 
 ## Installation
 
@@ -45,20 +31,46 @@ For example:
 ### Setup Instructions
 
 1. Clone the repository:
-   ```git clone https://github.com/yourusername/poker-simulator.git```
-   ```cd poker-simulator```
+   ```
+   git clone https://github.com/yourusername/poker-simulator.git
+   cd poker-simulator
+   ```
 
 2. Create a virtual environment and activate it:
-   ```python3 -m venv .venv```
-   ```source .venv/bin/activate  # On Windows, use .venv\Scripts\activate```
+   ```
+   python3 -m venv .venv
+   source .venv/bin/activate  # On Windows, use .venv\Scripts\activate
+   ```
    
 3. Install the dependencies:
-    ```pip install -r requirements.txt```
+    ```
+    pip install -r requirements.txt
+   ```
+   
+## Command-Line Configuration
+The simulator now uses argparse for dynamic configuration via command-line arguments. Here are the available options:
+
+* Player Count:
+Use -p or --players to specify the number of players (default: 2, range: 2-10).
+Example: --players 6
+
+* Simulation Runs:
+Use -r or --runs to specify the number of simulation runs (required).
+Example: --runs 1_000_000
+
+* Top Starting Hands:
+Use -tsh or --top-starting-hands to analyze the top starting hands (default: None, max value: 1326).
+Example: --top-starting-hands 20
+
+### Example Command
+    python main.py --players 6 --runs 100000 --top-starting-hands 20
 
 
 ## Usage
 1. Run the simulator:
-   ```python main.py```
+   ```
+   python main.py
+   ```
 
 2. The simulator outputs:
    - Progress logs during simulation.

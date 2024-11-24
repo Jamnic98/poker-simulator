@@ -2,7 +2,7 @@ from os import makedirs, path
 from numpy import array
 import seaborn as sns
 import matplotlib.pyplot as plt
-from app.utils.settings import config
+from app.settings import config
 
 
 class Graph:

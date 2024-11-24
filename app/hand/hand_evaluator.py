@@ -1,14 +1,11 @@
 from typing import List, Tuple, Union
-from app.board import Board
-from app.deck import Deck
 from app.hand import Hand
-from app.player import DummyPlayer
 from app.utils.enums import PokerHand
 
 
 class HandEvaluator:
     @staticmethod
-    def rank_hands(board: Board, players: List[DummyPlayer]) -> List[Union[Hand, Tuple[Hand, ...]]]:
+    def rank_hands(hands: List[Hand]) -> List[Union[Hand, Tuple[Hand, ...]]]:
         """
         Ranks all players' hands from strongest to weakest. If multiple hands tie,
         they are grouped as a tuple in the result list.
@@ -16,43 +13,40 @@ class HandEvaluator:
         ranked_hands = []
         hands_dict: dict[PokerHand, List[Hand]] = {}
 
-        # Evaluate each player's hand and group by hand type
-        for player in players:
-            hand = Hand([*player.pocket, *board.cards])
+        # Group hands by their hand type
+        for hand in hands:
             hands_dict.setdefault(hand.hand_type[0], []).append(hand)
 
-        # Sort hand types from strongest to weakest
+        # Rank hand types by poker hierarchy
         for ph in reversed(PokerHand):
             if ph in hands_dict:
-                # Sort hands within this hand type group
+                # Sort hands within this type by main cards and kickers
                 hands_dict[ph].sort(
                     key=lambda h: (
-                        h.hand_type[1],  # Main cards (e.g., triplet in Full House)
-                        h.hand_type[2]   # Kickers
+                        sorted(h.hand_type[1], reverse=True),  # Main cards
+                        sorted(h.hand_type[2], reverse=True)   # Kickers
                     ),
-                    reverse=True  # Strongest hands first
+                    reverse=True
                 )
 
                 # Group tied hands
-                tied_hands = []
-                previous_hand = None
-                for hand in hands_dict[ph]:
-                    if previous_hand is not None and (
-                        hand.hand_type[1] == previous_hand.hand_type[1] and
-                        hand.hand_type[2] == previous_hand.hand_type[2]
-                    ):
-                        # Add to tie group if same strength
-                        tied_hands[-1].append(hand)
+                grouped_hands = []
+                for idx, hand in enumerate(hands_dict[ph]):
+                    if idx > 0 and HandEvaluator._is_tied(hands_dict[ph][idx - 1], hand):
+                        grouped_hands[-1].append(hand)
                     else:
-                        # Start a new group
-                        tied_hands.append([hand])
-                    previous_hand = hand
+                        grouped_hands.append([hand])
 
-                # Flatten tied hands into tuples or single elements
-                for group in tied_hands:
+                # Flatten groups of tied hands into tuples or single entries
+                for group in grouped_hands:
                     if len(group) > 1:
-                        ranked_hands.append(tuple(group))  # Add as tuple if tied
+                        ranked_hands.append(tuple(group))
                     else:
-                        ranked_hands.append(group[0])  # Add single hand
+                        ranked_hands.append(group[0])
 
         return ranked_hands
+
+    @staticmethod
+    def _is_tied(hand1: Hand, hand2: Hand) -> bool:
+        """Checks if two hands are tied."""
+        return hand1.hand_type[1] == hand2.hand_type[1] and hand1.hand_type[2]

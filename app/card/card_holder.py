@@ -6,7 +6,7 @@ class CardHolder:
     def __init__(self, cards: Optional[List[Card]]=None):
         self.cards = cards or []
 
-    def __repr__(self):
+    def __str__(self):
         return str(self.cards)
 
     def __len__(self):

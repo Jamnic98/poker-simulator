@@ -1,5 +1,11 @@
-from functools import total_ordering
-from app.utils.constants import CARD_FACE_VALUE_MAP, CARD_FACE_NAME_MAP, CARD_SUIT_NAME_MAP, CARD_SUIT_ICON_MAP, FACES, SUITS
+from app.utils.constants import (
+    CARD_FACE_VALUE_MAP,
+    CARD_FACE_NAME_MAP,
+    CARD_SUIT_NAME_MAP,
+    CARD_SUIT_ICON_MAP,
+    FACES,
+    SUITS
+)
 
 
 class Card:
@@ -16,12 +22,8 @@ class Card:
         except ValueError as e:
             print(e)
 
-    @classmethod
-    def deserialize(cls, data):
-        return cls(data)
-
-    def __repr__(self):
-        return str(self.face + CARD_SUIT_ICON_MAP.get(self.suit))
+    def __str__(self):
+        return self.face + CARD_SUIT_ICON_MAP.get(self.suit)
 
     def __eq__(self, other):
         if not isinstance(other, Card):
@@ -34,12 +36,7 @@ class Card:
         return CARD_FACE_VALUE_MAP[self.face] < CARD_FACE_VALUE_MAP[other.face]
 
     def __hash__(self):
-        """Generate a hash value based on face and suit."""
-        return hash((self.face, self.suit))  # Tuple of face and suit
-
+        return hash(self.token)
 
     def __set_name(self):
         return f'{CARD_FACE_NAME_MAP.get(self.face)} of {CARD_SUIT_NAME_MAP.get(self.suit)}'
-
-    def serialize(self):
-        return self.face+self.suit

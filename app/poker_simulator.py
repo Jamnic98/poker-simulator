@@ -1,26 +1,25 @@
-from os import getcwd, makedirs, path
+from os import listdir, makedirs, path
 from datetime import datetime
 from time import time
 from asyncio import CancelledError
 from typing import List, Tuple
-from pandas import concat, DataFrame
+from pandas import concat, read_json, DataFrame
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from app.board import Board
 from app.dealer import Dealer
 from app.graph import Graph
 from app.hand.hand_evaluator import HandEvaluator
+from app.hand import Hand
 from app.player import DummyPlayer
 from app.utils.enums import Mode
-from app.utils.settings import config
-
-
-top_cards_count = config['TOP_CARDS_COUNT']
+from app.settings import config
 
 
 class PokerSimulator:
     def __init__(self, mode: Mode, run_count: int, player_count: int = 2):
         self.run_start_time = None
+        self.chunks_data_dir = None
         self.mode: Mode = mode
         self.run_count = run_count
         self.player_count = player_count
@@ -40,7 +39,7 @@ class PokerSimulator:
     def __run_pre_flop_sim(self, n_runs) -> None:
         """Runs pre_flop simulation in concurrent batches"""
         chunk_number = 0
-        chunk_size = 10000
+        chunk_size = 100000
         all_results = []
         start_time = time()
         with ProcessPoolExecutor() as executor:
@@ -54,7 +53,7 @@ class PokerSimulator:
                     try:
                         future_result = future.result()
                         chunk_results.append(future_result)
-                        
+
                         # Periodically save and log
                         if chunk_run_number % chunk_size == 0:
                             elapsed_time = time() - chunk_start_time
@@ -70,13 +69,12 @@ class PokerSimulator:
                 chunk_results_df = concat(chunk_results, axis=0)
                 all_results.append(chunk_results_df)
                 # save chunk data to file
-                # self.__output_chunk_results_to_file(chunk_results_df, chunk_number)
+                self.__output_chunk_results_to_file(chunk_results_df, chunk_number)
+                all_results.clear()
 
         # Output final results
         print(f'Total Run Duration: {(time() - start_time):.2f}s')
-        # Combine all chunks into a single DataFrame for graphing
-        final_results = concat(all_results, axis=0)
-        self.__graph_results(final_results)
+        self.__graph_results()
         self.running = False
 
     def _run_single_pre_flop_sim(self) -> DataFrame:
@@ -92,16 +90,23 @@ class PokerSimulator:
         dealer.deal_flop(board)
         dealer.deal_turn_or_river(board)
         dealer.deal_turn_or_river(board)
+        return self.__get_single_pre_flop_sim_result_entry(board, players)
+
+    def __get_single_pre_flop_sim_result_entry(self, board: Board, players: List[DummyPlayer]):
         # Create a list of results for each player hand
         hand_results = []
-        ranked_hands = self.hand_evaluator.rank_hands(board, players)
+        hands = [Hand([*player.pocket, *board.get_cards()]) for player in players]
+        ranked_hands = self.hand_evaluator.rank_hands(hands)
 
-        def create_result_entry(player_hand, is_winning_hand):
+        def create_result_entry(players_hand: Hand, won: bool):
             return {
-                'pocket': tuple(card.token for card in player_hand.get_sorted_cards()[:2]),
-                'board': tuple(card.token for card in player_hand.cards[2:]),
-                'hand_type': player_hand.hand_type,
-                'is_winning_hand': is_winning_hand,
+                'pocket': tuple(card.token for card in players_hand.get_sorted_cards()[:2]),
+                'board': tuple(card.token for card in players_hand.cards[2:]),
+                'hand_type': players_hand.hand_type[0].name,
+                'main_cards': tuple(card.token for card in players_hand.hand_type[1]),
+                'kickers': tuple(card.token for card in players_hand.hand_type[2]),
+                'main_suit': players_hand.hand_type[3],
+                'is_winning_hand': won,
             }
 
         # Iterate through ranked hands
@@ -109,65 +114,49 @@ class PokerSimulator:
             if i == 0 and isinstance(hand, Tuple):
                 # Handle the tuple of hands (e.g., tie case)
                 for player_hand in hand:
-                    hand_results.append(create_result_entry(player_hand, is_winning_hand=True))
+                    hand_results.append(create_result_entry(player_hand, won=True))
             else:
                 # Handle individual hands
                 is_winning_hand = hand == ranked_hands[0]
                 hand_results.append(create_result_entry(hand, is_winning_hand))
 
-        df = DataFrame(hand_results)
-        df.set_index(['board', 'pocket'], inplace=True)
-        return df
+        return DataFrame(hand_results).astype({'main_suit': 'string', 'hand_type': 'string'})
 
-    def __graph_results(self, data: DataFrame, plot_name: str = 'pre_flop_results') -> None:
+    def __graph_results(self, plot_name: str = 'pre_flop_results') -> None:
         """Graphs the winning hand data"""
-        # Reset the MultiIndex to make the 'pocket' a regular column
-        data_reset = data.reset_index()
+        dataframes = []
+        # Loop through all JSON files in the directory
+        for file in listdir(self.chunks_data_dir):
+            if file.endswith('.json'):  # Check if the file is a JSON file
+                file_path = path.join(self.chunks_data_dir, file)
+                # Load JSON data into a DataFrame
+                df = read_json(file_path, orient='records')
+                # Append the DataFrame to the list
+                dataframes.append(df)
 
+        # Concatenate all DataFrames into a single DataFrame
+        data = concat(dataframes, ignore_index=True)
+        if data.empty:
+            print('NO DATA')
+            return
         # Ensure that 'pocket' is represented as a string for each hand combination
-        data_reset['ordered_pocket'] = data_reset['pocket'].map(lambda x: f"{x[0]}_{x[1]}")
-
+        data['ordered_pocket'] = data['pocket'].map(lambda card: f"{card[0]}-{card[1]}")
         # Group by the 'ordered_pocket' to calculate win statistics
-        win_stats = data_reset.groupby('ordered_pocket').agg(
+        win_stats = data.groupby('ordered_pocket').agg(
             total_hands=('is_winning_hand', 'count'),
             total_wins=('is_winning_hand', 'sum')
         )
-
         # Calculate the win percentage
         win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
-
         # Sort the data by win percentage
         win_stats.sort_values('win_percentage', ascending=False, inplace=True)
-
-        
-        # # Ensure 'ordered_starting_hand' is a simple, sortable label for plotting
-        # win_stats['ordered_starting_hand'] = win_stats.index.get_level_values('pocket').map(lambda x: f"{x[0]}_{x[1]}")
-
-        # # You may want to reset the index to make the data easier to plot
-        # win_stats_reset = win_stats.reset_index()
-        # # Now you can plot
-        # x = win_stats_reset['ordered_starting_hand']
-        # y = win_stats_reset['win_percentage']
-
-        # data['ordered_starting_hand'] = data['pocket'].map(
-        #     lambda x: tuple(sorted(x, reverse=True))  # Example: Sort cards
-        # )
-        
-        # # Group by starting hand and calculate win percentages
-        # win_stats = data.groupby('ordered_starting_hand').agg(
-        #     total_hands=('is_winning_hand', 'count'),
-        #     total_wins=('is_winning_hand', 'sum')
-        # )
-
-        # # Calculate win percentage
-        # win_stats['win_percentage'] = (win_stats['total_wins'] / win_stats['total_hands']) * 100
-        # win_stats.sort_values('win_percentage', inplace=True, ascending=False)
-
+        top_cards_count = config.get('TOP_CARDS_COUNT', None)
         # Display the results
         graph = Graph(
             x_label='Starting Hand',
             y_label='Win %',
-            title=f'Pre-flop Simulation Results @ {self.run_count:.0E} runs w/ {self.player_count} players' + f' {f'Top {top_cards_count} Cards' if top_cards_count else ''}'
+            title=f'Pre-flop Simulation Results @ {self.run_count:.0E} runs w/ {self.player_count} players' \
+                  f' {f'Top {top_cards_count} Cards' if top_cards_count else ''}'
         )
 
         x = win_stats.index
@@ -182,16 +171,16 @@ class PokerSimulator:
 
     def __output_chunk_results_to_file(self, chunk_data: DataFrame, chunk_number: int) -> None:
         chunk_file_name = f'pre_flop_sim_chunk_{chunk_number}.json'
-        chunks_dir = path.join(config.get('RESULTS_DIR'), self.run_start_time)
-        if not path.isdir(chunks_dir):
-            makedirs(chunks_dir, exist_ok=True)
-        chunk_file_path = path.join(chunks_dir, chunk_file_name)
-        chunk_data.to_json(chunk_file_path, orient='records', lines=True)
+        if not path.isdir(self.chunks_data_dir):
+            makedirs(self.chunks_data_dir, exist_ok=True)
+        chunk_file_path = path.join(str(self.chunks_data_dir), chunk_file_name)
+        chunk_data.to_json(chunk_file_path, orient='records', lines=False)
         print(f'Saved chunk to file: {chunk_file_name}')
 
     def run(self) -> None:
         """Run the poker sim as a loop until complete"""
         self.run_start_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.chunks_data_dir = path.join(config.get('RESULTS_DIR', 'results'), self.run_start_time)
         self.running = True
         while self.running:
             if self.mode == Mode.PRE_FLOP_SIM:
