@@ -11,7 +11,16 @@ def test_init():
     test_cards = example_hands.three_of_a_kind.cards
     hand = Hand(test_cards)
     assert hand.cards == test_cards
-    Hand([Card('7H'), Card('8H'), Card('9H'), Card('JH'), Card('10H'), Card('QH'), Card('AH'), Card('KH')])
+    Hand([
+        Card('7H'),
+        Card('8H'),
+        Card('9H'),
+        Card('JH'),
+        Card('10H'),
+        Card('QH'),
+        Card('AH'),
+        Card('KH')]
+    )
     assert raises(ValueError)
 
 def test_init_with_duplicate_cards():
@@ -60,7 +69,7 @@ def test_makes_four_of_a_kind():
     assert example_hands.full_house.makes_four_of_a_kind() is False
     assert Hand([Card('AH'), Card('3H'), Card('2H'), Card('5D')]).makes_four_of_a_kind() is False
     assert example_hands.empty_hand.makes_four_of_a_kind() is False
-    
+
 def test_makes_full_house():
     assert example_hands.full_house.makes_full_house() is True
     assert example_hands.three_of_a_kind.makes_full_house() is False
@@ -100,11 +109,13 @@ def test_get_sorted_cards():
     ordered_test_hand = Hand([Card('9H'), Card('8H'), Card('AH'), Card('KH'), Card('QH'), Card('JH'), Card('10H')])
     for k, v in enumerate(test_hand.get_sorted_cards()):
         assert v.name == ordered_test_hand.cards[k].name
+
     # test 2
     test_hand = Hand([Card('2H'), Card('2C'), Card('3D'), Card('2S'), Card('8S'), Card('8D'), Card('KC')])
     ordered_test_hand = Hand([Card('2C'), Card('2H'), Card('KC'), Card('8D'), Card('8S'), Card('3D'), Card('2S')])
     for k, v in enumerate(test_hand.get_sorted_cards()):
         assert v.name == ordered_test_hand.cards[k].name
+
     # test 3
     test_hand = Hand([Card('6H'), Card('6C'), Card('3D'), Card('2S'), Card('8S'), Card('8D'), Card('KC')])
     ordered_test_hand = Hand([Card('6C'), Card('6H'), Card('KC'), Card('8D'), Card('8S'), Card('3D'), Card('2S')])

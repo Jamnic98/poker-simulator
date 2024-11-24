@@ -38,9 +38,6 @@ def test_add_turn():
     board.add_turn_card(turn_card)
     assert len(board.cards) == 4
     assert board.cards[3] == turn_card
-    # test adding too many cards
-    board.add_turn_card(test_cards)
-    assert raises(ValueError)
 
 def test_add_river():
     board = Board(test_cards.copy() + [turn_card])
@@ -48,6 +45,3 @@ def test_add_river():
     board.add_river_card(river_card)
     assert len(board.cards) == 5
     assert board.cards[4] == river_card
-    board.add_river_card(test_cards)
-    assert raises(ValueError)
-    

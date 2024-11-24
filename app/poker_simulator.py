@@ -3,8 +3,8 @@ from datetime import datetime
 from time import time
 from asyncio import CancelledError
 from typing import List, Tuple
-from pandas import concat, read_json, DataFrame
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from pandas import concat, read_parquet, DataFrame
 
 from app.board import Board
 from app.dealer import Dealer
@@ -26,10 +26,6 @@ class PokerSimulator:
         self.running: bool = False
         self.hand_evaluator = HandEvaluator()
 
-    def __reset(self) -> None:
-        """Resets the simulation at the end of a run"""
-        pass
-
     def __set_players(self, player_count: int) -> List[DummyPlayer]:
         """Initiates the players"""
         if self.mode == Mode.PRE_FLOP_SIM:
@@ -38,44 +34,41 @@ class PokerSimulator:
 
     def __run_pre_flop_sim(self, n_runs) -> None:
         """Runs pre_flop simulation in concurrent batches"""
-        chunk_number = 0
-        chunk_size = 100000
+        chunk_size = 100_000
         all_results = []
         start_time = time()
         with ProcessPoolExecutor() as executor:
-            for start in range(1, n_runs + 1, chunk_size):
-                end = min(start + chunk_size, n_runs + 1)
-                futures = [executor.submit(self._run_single_pre_flop_sim) for _ in range(start, end)]
-                chunk_number += 1
+            for chunk_number in range(1, n_runs + 1, chunk_size):
+                # Adjust the chunk size for the final batch if necessary
+                remaining_runs = n_runs - chunk_number + 1
+                current_chunk_size = min(chunk_size, remaining_runs)
+
                 chunk_results = []
                 chunk_start_time = time()
-                for chunk_run_number, future in enumerate(as_completed(futures), start=1):
+                for future in as_completed([
+                    executor.submit(self._run_single_pre_flop_sim) for _ in range(chunk_number,
+                                                                                  chunk_number + current_chunk_size)
+                ]):
                     try:
-                        future_result = future.result()
-                        chunk_results.append(future_result)
-
+                        chunk_results.append(future.result())
                         # Periodically save and log
-                        if chunk_run_number % chunk_size == 0:
+                        if len(chunk_results) % current_chunk_size == 0:
                             elapsed_time = time() - chunk_start_time
-                            print(
-                                f"Run: {(chunk_number-1)*chunk_size + 1} -> {chunk_number * chunk_size},"
-                                f" Duration: {elapsed_time:.2f}s"
-                            )
+                            print(f"Run: {chunk_number} -> {chunk_number + current_chunk_size - 1},"
+                                  f" Duration: {elapsed_time:.2f}s")
                             chunk_start_time = time()
                     except (CancelledError, TimeoutError) as e:
-                        print(f"An error occurred during run {chunk_run_number}: {e}")
+                        print(f"An error occurred: {e}")
 
-                # combine chunk results and save to file
+                # Combine chunk results and save
                 chunk_results_df = concat(chunk_results, axis=0)
                 all_results.append(chunk_results_df)
-                # save chunk data to file
                 self.__output_chunk_results_to_file(chunk_results_df, chunk_number)
-                all_results.clear()
 
-        # Output final results
-        print(f'Total Run Duration: {(time() - start_time):.2f}s')
-        self.__graph_results()
-        self.running = False
+            # Output final results
+            print(f'Total Run Duration: {(time() - start_time):.2f}s')
+            self.__graph_results()
+            self.running = False
 
     def _run_single_pre_flop_sim(self) -> DataFrame:
         """Runs a single pre_flop simulation"""
@@ -125,13 +118,12 @@ class PokerSimulator:
     def __graph_results(self, plot_name: str = 'pre_flop_results') -> None:
         """Graphs the winning hand data"""
         dataframes = []
-        # Loop through all JSON files in the directory
+        # Loop through all Parquet files in the directory
         for file in listdir(self.chunks_data_dir):
-            if file.endswith('.json'):  # Check if the file is a JSON file
+            if file.endswith('.parquet'):  # Check if the file is a Parquet file
                 file_path = path.join(self.chunks_data_dir, file)
-                # Load JSON data into a DataFrame
-                df = read_json(file_path, orient='records')
-                # Append the DataFrame to the list
+                # Load Parquet data into a DataFrame
+                df = read_parquet(file_path)
                 dataframes.append(df)
 
         # Concatenate all DataFrames into a single DataFrame
@@ -170,11 +162,13 @@ class PokerSimulator:
         graph.show()
 
     def __output_chunk_results_to_file(self, chunk_data: DataFrame, chunk_number: int) -> None:
-        chunk_file_name = f'pre_flop_sim_chunk_{chunk_number}.json'
+        chunk_file_name = f'pre_flop_sim_chunk_{chunk_number}.parquet'
         if not path.isdir(self.chunks_data_dir):
             makedirs(self.chunks_data_dir, exist_ok=True)
-        chunk_file_path = path.join(str(self.chunks_data_dir), chunk_file_name)
-        chunk_data.to_json(chunk_file_path, orient='records', lines=False)
+        chunk_file_path = path.join(self.chunks_data_dir, chunk_file_name)
+
+        # Save as Parquet
+        chunk_data.to_parquet(chunk_file_path, engine='pyarrow', index=False)
         print(f'Saved chunk to file: {chunk_file_name}')
 
     def run(self) -> None:
@@ -185,4 +179,3 @@ class PokerSimulator:
         while self.running:
             if self.mode == Mode.PRE_FLOP_SIM:
                 self.__run_pre_flop_sim(self.run_count)
-        self.__reset()

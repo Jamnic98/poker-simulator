@@ -14,8 +14,8 @@ log_filename = path.join(log_folder, f"{datetime.now().strftime('%Y-%m-%d')}.log
 
 # Set up the logger
 def setup_logger(name: str='logger'):
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)  # Set the default logging level
+    custom_logger = logging.getLogger(name)
+    custom_logger.setLevel(logging.DEBUG)  # Set the default logging level
 
     # Create handlers for file and console logging
     file_handler = logging.FileHandler(log_filename)
@@ -31,9 +31,9 @@ def setup_logger(name: str='logger'):
     console_handler.setFormatter(formatter)
 
     # Add handlers to the logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+    custom_logger.addHandler(file_handler)
+    custom_logger.addHandler(console_handler)
 
-    return logger
+    return custom_logger
 
 logger = setup_logger()

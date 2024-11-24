@@ -1,5 +1,5 @@
 from typing import List
-from app.card import Card, CardHolder
+from app.card import Card
 
 
 class DummyPlayer:
@@ -19,16 +19,3 @@ class DummyPlayer:
 
     def reset(self):
         self.pocket.clear()
-
-
-# class Player(DummyPlayer):
-#     def make_move(self):
-#         pass
-
-
-# class AI(DummyPlayer):
-#     def __init__(self, *args):
-#         super().__init__(*args)
-
-#     def make_move(self):
-#         pass

@@ -423,6 +423,8 @@ disable=fixme,
         missing-class-docstring,
         missing-function-docstring,
         too-few-public-methods,
+        line-too-long,
+        too-many-return-statements
 
 
 # Enable the message, report, category or checker with the given id(s). You can

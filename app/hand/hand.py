@@ -48,38 +48,38 @@ class Hand(CardHolder):
             main_suit = self.get_flush_suit()
             main_cards, kickers = self.get_main_cards(main_suit, is_royal_flush=True)
             return PokerHand.ROYAL_FLUSH, main_cards, kickers, main_suit
-        elif self.makes_straight_flush():
+        if self.makes_straight_flush():
             main_suit = self.get_flush_suit()
             main_cards, kickers = self.get_main_cards(main_suit, is_flush=True, is_straight=True)
             return PokerHand.STRAIGHT_FLUSH, main_cards, kickers, main_suit
-        elif self.makes_four_of_a_kind():
+        if self.makes_four_of_a_kind():
             main_cards, kickers = self.get_x_of_a_kind_main_and_kickers(x=4)
             return PokerHand.FOUR_OF_A_KIND, main_cards, kickers, None
-        elif self.makes_full_house():
+        if self.makes_full_house():
             main_cards, kickers = self.get_full_house_main_and_kickers()
             return PokerHand.FULL_HOUSE, main_cards, kickers, None
-        elif self.makes_flush():
+        if self.makes_flush():
             main_suit = self.get_flush_suit()
             main_cards, kickers = self.get_main_cards(main_suit, is_flush=True)
             return PokerHand.FLUSH, main_cards, kickers, main_suit
-        elif self.makes_straight():
+        if self.makes_straight():
             main_cards, kickers = self.get_main_cards(is_straight=True)
             return PokerHand.STRAIGHT, main_cards, kickers, None
-        elif self.makes_three_of_a_kind():
+        if self.makes_three_of_a_kind():
             main_cards, kickers = self.get_x_of_a_kind_main_and_kickers(x=3)
             return PokerHand.THREE_OF_A_KIND, main_cards, kickers, None
-        elif self.makes_two_pair():
+        if self.makes_two_pair():
             main_cards, kickers = self.get_two_pair_main_and_kickers()
             return PokerHand.TWO_PAIR, main_cards, kickers, None
-        elif self.makes_pair():
+        if self.makes_pair():
             main_cards, kickers = self.get_x_of_a_kind_main_and_kickers(x=2)
             return PokerHand.PAIR, main_cards, kickers, None
-        else:
-            # High card
-            sorted_cards = self.get_sorted_cards()
-            main_cards = tuple([sorted_cards[0]])
-            kickers = tuple(sorted_cards[1:5])
-            return PokerHand.HIGH_CARD, main_cards, kickers, None
+
+        # High card
+        sorted_cards = self.get_sorted_cards()
+        main_cards = tuple([sorted_cards[0]])
+        kickers = tuple(sorted_cards[1:5])
+        return PokerHand.HIGH_CARD, main_cards, kickers, None
 
     def get_flush_suit(self) -> str or None:
         suit_count = {}
@@ -254,7 +254,7 @@ class Hand(CardHolder):
                 suits[card.suit].add(1)  # Add Ace-low value
 
         # Check for straight flush in each suit
-        for suit, ranks in suits.items():
+        for _suit, ranks in suits.items():
             if len(ranks) < 5:
                 continue
             sorted_ranks = sorted(ranks)

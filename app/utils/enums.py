@@ -4,7 +4,6 @@ from enum import Enum
 class Mode(Enum):
     PRE_FLOP_SIM = "pre_flop_sim"
 
-
 class PokerHand(Enum):
     HIGH_CARD = 1
     PAIR = 2
@@ -16,4 +15,3 @@ class PokerHand(Enum):
     FOUR_OF_A_KIND = 8
     STRAIGHT_FLUSH = 9
     ROYAL_FLUSH = 10
-    
