@@ -1,5 +1,6 @@
 from typing import List
 from app.card import Card
+from app.utils.logger_setup import logger
 
 
 class DummyPlayer:
@@ -12,7 +13,7 @@ class DummyPlayer:
                 raise  ValueError(f'Unable to add cards {cards}')
             self.pocket.extend(cards)
         except ValueError as e:
-            print(e)
+            logger.error(e)
 
     def make_move(self):
         pass

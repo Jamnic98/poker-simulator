@@ -6,6 +6,7 @@ from app.utils.constants import (
     FACES,
     SUITS
 )
+from app.utils.logger_setup import logger
 
 
 class Card:
@@ -20,7 +21,7 @@ class Card:
             self.name: str = self.__set_name()
             self.face_value: int = CARD_FACE_VALUE_MAP.get(self.face)
         except ValueError as e:
-            print(e)
+            logger.error(e)
 
     def __str__(self):
         return self.face + CARD_SUIT_ICON_MAP.get(self.suit)

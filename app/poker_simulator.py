@@ -12,6 +12,7 @@ from app.graph import Graph
 from app.hand.hand_evaluator import HandEvaluator
 from app.hand import Hand
 from app.player import DummyPlayer
+from app.utils.logger_setup import logger
 from app.utils.enums import Mode
 from app.settings import config
 
@@ -54,11 +55,11 @@ class PokerSimulator:
                         # Periodically save and log
                         if len(chunk_results) % current_chunk_size == 0:
                             elapsed_time = time() - chunk_start_time
-                            print(f"Run: {chunk_number} -> {chunk_number + current_chunk_size - 1},"
+                            logger.info(f"Run: {chunk_number} -> {chunk_number + current_chunk_size - 1},"
                                   f" Duration: {elapsed_time:.2f}s")
                             chunk_start_time = time()
                     except (CancelledError, TimeoutError) as e:
-                        print(f"An error occurred: {e}")
+                        logger.error(f"An error occurred: {e}")
 
                 # Combine chunk results and save
                 chunk_results_df = concat(chunk_results, axis=0)
@@ -66,7 +67,7 @@ class PokerSimulator:
                 self.__output_chunk_results_to_file(chunk_results_df, chunk_number)
 
             # Output final results
-            print(f'Total Run Duration: {(time() - start_time):.2f}s')
+            logger.info(f'Total Run Duration: {(time() - start_time):.2f}s')
             self.__graph_results()
             self.running = False
 
@@ -129,7 +130,7 @@ class PokerSimulator:
         # Concatenate all DataFrames into a single DataFrame
         data = concat(dataframes, ignore_index=True)
         if data.empty:
-            print('NO DATA')
+            logger.error('Cannot graph empty DataFrame')
             return
         # Ensure that 'pocket' is represented as a string for each hand combination
         data['ordered_pocket'] = data['pocket'].map(lambda card: f"{card[0]}-{card[1]}")
@@ -169,7 +170,7 @@ class PokerSimulator:
 
         # Save as Parquet
         chunk_data.to_parquet(chunk_file_path, engine='pyarrow', index=False)
-        print(f'Saved chunk to file: {chunk_file_name}')
+        logger.info(f'Saved chunk to file: {chunk_file_name}')
 
     def run(self) -> None:
         """Run the poker sim as a loop until complete"""

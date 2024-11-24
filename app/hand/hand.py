@@ -1,5 +1,7 @@
+import logging
 from typing import List, Tuple
 from app.card import Card, CardHolder
+from app.utils.logger_setup import logger
 from app.utils.enums import PokerHand
 from app.utils.constants import CARD_FACE_VALUE_MAP
 
@@ -15,7 +17,7 @@ class Hand(CardHolder):
                 raise ValueError
             self.hand_type = self.get_hand_type()
         except ValueError as e:
-            print(f'Init hand failed: {e}')
+            logging.error(f'Init hand failed: {e}')
 
     def __makes_x_of_a_kind(self, x: int) -> bool:
         """returns true if x number of occurrences of a card face in hand"""
@@ -37,7 +39,7 @@ class Hand(CardHolder):
                     raise ValueError
                 self.cards.extend(cards)
             except ValueError as e:
-                print(f'Error adding cards to hand {e}')
+                logger.error(f'Error adding cards to hand {e}')
 
     def get_hand_type(self) -> (PokerHand, Tuple[Card], Tuple[Card], str or None):
         """Returns a tuple: (PokerHand, <main_cards>, <kicker_cards>, <main_suit> if applicable)."""
