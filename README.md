@@ -81,20 +81,21 @@ Example: --top-starting-hands 20
 
 ## Simulation Results
 
-The simulation was run with **2 players** over **1,000,000 games**. Below are the observed percentages for each hand type compared to theoretical probabilities:
+The simulation was run with **2 players** over **10,000,000 games**. Below are the observed percentages for each hand type compared to theoretical probabilities:
 
-| **Hand Type**       | **Observed Percentage** | **Theoretical Percentage** |
-|---------------------|-------------------------|----------------------------|
-| **Royal Flush**     | 0.0031%                 | 0.0032%                    |
-| **Straight Flush**  | 0.0270%                 | 0.0279%                    |
-| **Four of a Kind**  | 0.1631%                 | 0.1681%                    |
-| **Full House**      | 2.6062%                 | 2.5961%                    |
-| **Flush**           | 3.0387%                 | 3.0255%                    |
-| **Straight**        | 4.6113%                 | 4.6194%                    |
-| **Three of a Kind** | 4.7864%                 | 4.8290%                    |
-| **Two Pair**        | 23.5325%                | 23.4955%                   |
-| **One Pair**        | 43.8271%                | 43.8226%                   |
-| **High Card**       | 17.4047%                | 17.4127%                   |
+| **Hand Type**       | **Observed Percentage** | **Theoretical Percentage** | **% Difference**         |
+|---------------------|-------------------------|----------------------------|--------------------------|
+| **Royal Flush**     | 0.0033%                 | 0.0032%                    | 0.31%                    |
+| **Straight Flush**  | 0.0279%                 | 0.0279%                    | 0.00%                    |
+| **Four of a Kind**  | 0.1694%                 | 0.1681%                    | 0.77%                    |
+| **Full House**      | 2.5962%                 | 2.5961%                    | 0.00%                    |
+| **Flush**           | 3.0279%                 | 3.0255%                    | 0.08%                    |
+| **Straight**        | 4.6153%                 | 4.6194%                    | -0.09%                   |
+| **Three of a Kind** | 4.8237%                 | 4.8290%                    | -0.11%                   |
+| **Two Pair**        | 23.4836%                | 23.4955%                   | -0.05%                   |
+| **One Pair**        | 43.8232%                | 43.8226%                   | 0.00%                    |
+| **High Card**       | 17.4294%                | 17.4127%                   | 0.10%                    |
+
 
 These results align closely with theoretical probabilities for poker hands in a 52-card deck and validate the accuracy of the hand evaluation logic.
 
