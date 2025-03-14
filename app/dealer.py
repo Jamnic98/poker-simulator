@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from app.board import Board
 from app.deck import Deck
 from app.player import DummyPlayer
@@ -11,7 +11,7 @@ class Dealer:
     def shuffle_cards(self):
         self.deck.shuffle()
 
-    def deal_starting_cards(self, players: List[DummyPlayer]) -> None:
+    def deal_starting_cards(self, players: Tuple[DummyPlayer, ...]) -> None:
         for _ in range(2):
             for player in players:
                 player.pocket.append(self.deck.cards.pop())

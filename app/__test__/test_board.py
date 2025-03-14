@@ -24,7 +24,6 @@ def test_clear_board():
 
 def test_add_flop():
     board = Board()
-    # test flop
     board.add_flop_cards(test_cards)
     assert len(board.cards) == 3
     assert board.cards == test_cards
@@ -34,14 +33,12 @@ def test_add_flop():
 
 def test_add_turn():
     board = Board(test_cards.copy())
-    # test turn
     board.add_turn_card(turn_card)
     assert len(board.cards) == 4
     assert board.cards[3] == turn_card
 
 def test_add_river():
     board = Board(test_cards.copy() + [turn_card])
-    # test river
     board.add_river_card(river_card)
     assert len(board.cards) == 5
     assert board.cards[4] == river_card

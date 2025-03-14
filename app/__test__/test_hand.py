@@ -2,6 +2,7 @@ from pytest import raises
 from app.card import Card
 from app.hand import Hand
 from app.utils import example_hands
+from app.utils.cards import cards
 from app.utils.enums import PokerHand
 
 
@@ -31,6 +32,17 @@ def test_add_cards():
     hand = Hand()
     hand.add_cards(example_hands.pair.cards)
     assert hand.cards == example_hands.pair.cards
+    hand.add_cards([
+        Card('7H'),
+        Card('8H'),
+        Card('9H'),
+        Card('JH'),
+        Card('10H'),
+        Card('QH'),
+        Card('AH'),
+        Card('KH')
+    ])
+    assert raises(ValueError)
 
 def test_get_hand_type():
     hand = example_hands.royal_flush
@@ -41,7 +53,7 @@ def test_get_hand_type():
     assert hand.get_hand_type()[0] == PokerHand.FOUR_OF_A_KIND
     hand = example_hands.full_house
     assert hand.get_hand_type()[0] == PokerHand.FULL_HOUSE
-    hand = example_hands.flush
+    hand = example_hands.hearts_flush
     assert hand.get_hand_type()[0] == PokerHand.FLUSH
     hand = example_hands.straight
     assert hand.get_hand_type()[0] == PokerHand.STRAIGHT
@@ -58,11 +70,11 @@ def test_makes_royal_flush():
     assert example_hands.royal_flush.makes_royal_flush() is True
     assert example_hands.straight_flush.makes_royal_flush() is False
     assert example_hands.straight.makes_royal_flush() is False
-    assert example_hands.flush.makes_royal_flush() is False
+    assert example_hands.hearts_flush.makes_royal_flush() is False
 
 def test_makes_straight_flush():
     assert example_hands.straight_flush.makes_straight_flush() is True
-    assert example_hands.flush.makes_straight_flush() is False
+    assert example_hands.hearts_flush.makes_straight_flush() is False
 
 def test_makes_four_of_a_kind():
     assert example_hands.four_of_a_kind.makes_four_of_a_kind() is True
@@ -78,7 +90,7 @@ def test_makes_full_house():
     assert example_hands.empty_hand.makes_full_house() is False
 
 def test_makes_flush():
-    assert example_hands.flush.makes_flush() is True
+    assert example_hands.hearts_flush.makes_flush() is True
     assert example_hands.royal_flush.makes_flush() is True
     assert example_hands.empty_hand.makes_flush() is False
 
@@ -121,3 +133,38 @@ def test_get_sorted_cards():
     ordered_test_hand = Hand([Card('6C'), Card('6H'), Card('KC'), Card('8D'), Card('8S'), Card('3D'), Card('2S')])
     for k, v in enumerate(test_hand.get_sorted_cards()):
         assert v.name == ordered_test_hand.cards[k].name
+
+
+def test_get_two_pair_main_and_kickers():
+    king_of_clubs = cards['king_of_clubs']
+    king_of_hearts = cards['king_of_hearts']
+    eight_of_diamonds = cards['eight_of_diamonds']
+    eight_of_spades = cards['eight_of_spades']
+    six_of_clubs = cards['six_of_clubs']
+    six_of_hearts = cards['six_of_hearts']
+    three_of_diamonds = cards['three_of_diamonds']
+    two_of_spades = cards['two_of_spades']
+
+    test_hand = Hand([
+        six_of_hearts,
+        eight_of_spades,
+        six_of_clubs,
+        three_of_diamonds,
+        two_of_spades,
+        eight_of_diamonds,
+        king_of_clubs
+    ])
+    result = test_hand.get_two_pair_main_and_kickers()
+    assert result == ((eight_of_spades, eight_of_diamonds, six_of_hearts, six_of_clubs), (king_of_clubs, ))
+
+    test_hand = Hand([
+        king_of_hearts,
+        six_of_hearts,
+        six_of_clubs,
+        two_of_spades,
+        eight_of_spades,
+        eight_of_diamonds,
+        king_of_clubs
+    ])
+    result = test_hand.get_two_pair_main_and_kickers()
+    assert result == ((king_of_hearts, king_of_clubs, eight_of_spades, eight_of_diamonds), (six_of_hearts, ))

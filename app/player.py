@@ -1,4 +1,5 @@
 from typing import List
+
 from app.card import Card
 from app.utils.logger_setup import logger
 
@@ -10,13 +11,10 @@ class DummyPlayer:
     def add_cards(self, cards: List[Card]):
         try:
             if len(cards) + len(self.pocket) > 2:
-                raise  ValueError(f'Unable to add cards {cards}')
+                raise ValueError(f'Unable to add cards {cards}')
             self.pocket.extend(cards)
         except ValueError as e:
             logger.error(e)
-
-    def make_move(self):
-        pass
 
     def reset(self):
         self.pocket.clear()

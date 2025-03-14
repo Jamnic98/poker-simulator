@@ -5,7 +5,7 @@ from app.utils.enums import PokerHand
 
 class HandEvaluator:
     @staticmethod
-    def rank_hands(hands: List[Hand]) -> List[Union[Hand, Tuple[Hand, ...]]]:
+    def rank_hands(hands: Tuple[Hand, ...]) -> List[Union[Hand, Tuple[Hand, ...]]]:
         """
         Ranks all players' hands from strongest to weakest. If multiple hands tie,
         they are grouped as a tuple in the result list.

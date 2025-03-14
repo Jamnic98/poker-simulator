@@ -12,6 +12,7 @@ def main():
         mode=Mode.PRE_FLOP_SIM,
         player_count=arguments.players,
         run_count=arguments.runs,
+        top_starting_hands=arguments.top_starting_hands
     )
     poker_simulator.run()
 

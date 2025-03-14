@@ -1,16 +1,20 @@
 import logging
 from os import path, makedirs
+
 from datetime import datetime
 from app.settings import config
 
+# Define the base log directory
+log_base_folder = config['LOG_DIR']
 
-# Create a logs folder if it doesn't exist
-log_folder = config['LOG_DIR']
-if not path.exists(log_folder):
-    makedirs(log_folder)
+# Generate a subfolder for the current date
+current_date = datetime.now().strftime('%d-%m-%Y')
+date_folder = path.join(log_base_folder, current_date)
+if not path.exists(date_folder):
+    makedirs(date_folder)
 
-# Generate a log file name with the current date
-log_filename = path.join(log_folder, f"{datetime.now().strftime('%Y-%m-%d')}.log")
+# Generate the log file name with the current time
+log_filename = path.join(date_folder, f"{datetime.now().strftime('%H-%M-%S')}.log")
 
 # Set up the logger
 def setup_logger(name: str='logger'):
