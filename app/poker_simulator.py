@@ -1,3 +1,4 @@
+from multiprocessing import cpu_count
 from pathlib import Path
 from datetime import datetime
 from time import time
@@ -36,41 +37,43 @@ class PokerSimulator:
         return tuple()
 
     def __run_pre_flop_sim(self, n_runs) -> None:
-        """Runs pre_flop simulation in concurrent batches"""
+        """Runs pre-flop simulation in concurrent batches."""
         try:
             start_time = time()
-            with ProcessPoolExecutor(max_workers=1) as executor:
-                chunk_results = []
+            with ProcessPoolExecutor(max_workers=cpu_count()) as executor:
                 for chunk_number in range(1, n_runs + 1, self.chunk_size):
                     chunk_start_time = time()
 
-                    # Adjust the chunk size for the final batch if necessary
+                    # Determine size of current chunk
                     remaining_runs = n_runs + 1 - chunk_number
                     current_chunk_size = min(self.chunk_size, remaining_runs)
 
-                    # Process chunk in parallel
-                    for future in as_completed([
-                        executor.submit(self._run_single_pre_flop_sim) for _ in range(chunk_number,
-                                                                                      chunk_number + current_chunk_size)
-                    ]):
-                       chunk_results.append(future.result())
+                    # Submit tasks for the current chunk
+                    futures = [
+                        executor.submit(self._run_single_pre_flop_sim)
+                        for _ in range(current_chunk_size)
+                    ]
 
-                    # Log chunk run duration
-                    logger.info(f"Run: {chunk_number} -> {chunk_number + current_chunk_size - 1}, "
-                                f"Chunk run duration: {time() - chunk_start_time:.2f}s")
+                    # Collect results as they complete
+                    chunk_results = [future.result() for future in as_completed(futures)]
 
-                    # Combine chunk results and save
-                    chunk_results_df = concat(chunk_results, axis=0)
+                    # Combine chunk results into a single DataFrame
+                    chunk_results_df = concat(chunk_results, ignore_index=True)
 
+                    # Output results to file
                     self.__output_chunk_results_to_file(chunk_results_df, ((chunk_number - 1) // self.chunk_size))
 
-                    # reset for next chunk
-                    chunk_results.clear()
+                    # Log chunk duration
+                    logger.info(
+                        f"Run: {chunk_number} -> {chunk_number + current_chunk_size - 1}, "
+                        f"Chunk run duration: {time() - chunk_start_time:.2f}s"
+                    )
 
-                # Log total pre-flop sim run duration
-                logger.info(f'Total Run Duration: {(time() - start_time):.2f}s')
-                # Graph final results
-                self.__graph_results()
+            # Log total duration
+            logger.info(f"Total Run Duration: {time() - start_time:.2f}s")
+
+            # Graph results
+            self.__graph_results()
 
         except (CancelledError, TimeoutError) as e:
             logger.error(f"An error occurred: {e}")
@@ -92,9 +95,6 @@ class PokerSimulator:
         dealer.deal_turn_or_river(board)
 
         results = self.__get_single_pre_flop_sim_result_entry(board, players)
-        del board
-        del dealer
-        del players
         return results
 
     def __get_single_pre_flop_sim_result_entry(
