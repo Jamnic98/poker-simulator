@@ -1,7 +1,5 @@
-import logging
 from typing import List, Tuple
 from app.card import Card, CardHolder
-from app.utils.logger_setup import logger
 from app.utils.enums import PokerHand
 from app.utils.constants import CARD_FACE_VALUE_MAP
 
@@ -10,14 +8,27 @@ class Hand(CardHolder):
     def __init__(self, cards: List[Card]=None):
         super().__init__(cards)
         self.hand_type = None
-        try:
-            if len(self) > 7:
-                raise ValueError
-            if cards and len(set(cards)) != len(set(self.cards)):
-                raise ValueError
-            self.hand_type = self.get_hand_type()
-        except ValueError as e:
-            logging.error(f'Init hand failed: {e}')
+        if len(self) > 7:
+            raise ValueError('Hand cannot contain more than 7 cards')
+        if cards and len(set(cards)) != len(cards):
+            raise ValueError('Hand cannot contain duplicate cards')
+        self.hand_type = self.get_hand_type()
+
+    def get_strength(self) -> tuple:
+        """Numeric comparison key: (hand rank, main card values, kicker values).
+        Main/kicker values are sorted descending. For straights the ace counts
+        as 1 when it plays low (wheel straight A-2-3-4-5 -> (5, 4, 3, 2, 1))."""
+        if self.hand_type is None or self.hand_type[0] is None:
+            return (0, (), ())
+        category, main_cards, kickers, _ = self.hand_type
+
+        def values(cards) -> tuple:
+            return tuple(sorted((CARD_FACE_VALUE_MAP[c.face] for c in cards), reverse=True))
+
+        main_values = values(main_cards)
+        if category in (PokerHand.STRAIGHT, PokerHand.STRAIGHT_FLUSH) and set(main_values) == {14, 5, 4, 3, 2}:
+            main_values = (5, 4, 3, 2, 1)
+        return category.value, main_values, values(kickers)
 
     def __makes_x_of_a_kind(self, x: int) -> bool:
         """returns true if x number of occurrences of a card face in hand"""
@@ -31,15 +42,13 @@ class Hand(CardHolder):
         return False
 
     def add_cards(self, cards: List[Card]) -> None:
-        if (cards_len := len(cards)) > 0:
-            try:
-                if cards_len + len(self) > 7:
-                    raise ValueError
-                if len(set(cards)) != len(set(cards.copy() + self.cards)):
-                    raise ValueError
-                self.cards.extend(cards)
-            except ValueError as e:
-                logger.error(f'Error adding cards to hand {e}')
+        if len(cards) == 0:
+            return
+        if len(cards) + len(self) > 7:
+            raise ValueError('Hand cannot contain more than 7 cards')
+        if len(set(cards)) != len(set(list(cards) + self.cards)):
+            raise ValueError('Hand cannot contain duplicate cards')
+        self.cards.extend(cards)
 
     def get_hand_type(self) -> (PokerHand, Tuple[Card], Tuple[Card], str or None):
         """Returns a tuple: (PokerHand, <main_cards>, <kicker_cards>, <main_suit> if applicable)."""
@@ -117,11 +126,11 @@ class Hand(CardHolder):
             sorted_suited_cards = sorted(suited_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face], reverse=True)[:5]
             return tuple(sorted_suited_cards), ()
 
-        # Handle Flush (only when not part of a straight)
+        # Handle Flush (only when not part of a straight); only the best 5 cards count
         if is_flush and not is_straight:
             suited_cards = [card for card in self.cards if card.suit == main_suit]
             sorted_suited_cards = sorted(suited_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face], reverse=True)
-            return tuple(sorted_suited_cards), ()
+            return tuple(sorted_suited_cards[:5]), ()
 
         # Handle Straight
         if is_straight:
@@ -141,12 +150,12 @@ class Hand(CardHolder):
                     straight_cards = potential_straight
                     break
 
-            # Special case: Ace-low straight (A-2-3-4-5)
+            # Special case: Ace-low straight (A-2-3-4-5), ordered 5-high with the ace last
             if not straight_cards and 'A' in [card.face for card in unique_faces] and '2' in [card.face for card in
                                                                                               unique_faces]:
                 ace = next(card for card in unique_faces if card.face == 'A')
                 low_cards = [card for card in unique_faces if CARD_FACE_VALUE_MAP[card.face] <= 5 and card.face != 'A']
-                straight_cards = [ace] + sorted(low_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face])
+                straight_cards = sorted(low_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face], reverse=True) + [ace]
 
             if straight_cards:
                 return tuple(straight_cards), ()
@@ -169,24 +178,28 @@ class Hand(CardHolder):
         for card in self.cards:
             face_counts[card.face] = face_counts.get(card.face, 0) + 1
 
-        # Identify the three-of-a-kind and pair
+        # Identify the three-of-a-kind and pair; with two sets in 7 cards the
+        # second set acts as the pair, so only exclude the chosen trips face
         three_of_a_kind_faces = sorted(
             [face for face, count in face_counts.items() if count >= 3],
             key=lambda face: CARD_FACE_VALUE_MAP[face],
             reverse=True
         )
-        pair_faces = sorted(
-            [face for face, count in face_counts.items() if count >= 2 and face not in three_of_a_kind_faces],
-            key=lambda face: CARD_FACE_VALUE_MAP[face],
-            reverse=True
-        )
 
-        # Ensure both three-of-a-kind and pair are present
-        if not three_of_a_kind_faces or not pair_faces:
+        if not three_of_a_kind_faces:
             return (), ()
 
         # Select the strongest full house (highest three-of-a-kind, then highest pair)
         three_of_a_kind_face = three_of_a_kind_faces[0]
+        pair_faces = sorted(
+            [face for face, count in face_counts.items() if count >= 2 and face != three_of_a_kind_face],
+            key=lambda face: CARD_FACE_VALUE_MAP[face],
+            reverse=True
+        )
+
+        if not pair_faces:
+            return (), ()
+
         pair_face = pair_faces[0]
 
         # Get main cards (three-of-a-kind)

@@ -1,3 +1,4 @@
+from pytest import raises
 from app.board import Board
 from app.dealer import Dealer
 
@@ -20,7 +21,15 @@ def test_deal_turn_or_river():
     dealer = Dealer()
     board = Board()
     dealer.shuffle_cards()
+    with raises(ValueError):
+        dealer.deal_turn_or_river(board)
+    dealer.deal_flop(board)
+    assert len(board.cards) == 3
     last_card_in_deck = dealer.deck.cards.copy()[-1]
     dealer.deal_turn_or_river(board)
-    assert len(board.cards) == 1
-    assert board.cards[0] == last_card_in_deck
+    assert len(board.cards) == 4
+    assert board.cards[3] == last_card_in_deck
+    last_card_in_deck = dealer.deck.cards.copy()[-1]
+    dealer.deal_turn_or_river(board)
+    assert len(board.cards) == 5
+    assert board.cards[4] == last_card_in_deck

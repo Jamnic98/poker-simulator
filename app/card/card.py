@@ -6,22 +6,20 @@ from app.utils.constants import (
     FACES,
     SUITS
 )
-from app.utils.logger_setup import logger
 
 
 class Card:
     def __init__(self, token: str):
-        try:
-            face, suit = token[:-1], token[-1]
-            if face not in FACES or suit not in SUITS:
-                raise ValueError(f'Invalid token: {token}')
-            self.token = token
-            self.face: str = face
-            self.suit: str = suit
-            self.name: str = self.__set_name()
-            self.face_value: int = CARD_FACE_VALUE_MAP.get(self.face)
-        except (KeyError, ValueError) as e:
-            logger.error(e)
+        if len(token) < 2:
+            raise ValueError(f'Invalid token: {token}')
+        face, suit = token[:-1], token[-1]
+        if face not in FACES or suit not in SUITS:
+            raise ValueError(f'Invalid token: {token}')
+        self.token = token
+        self.face: str = face
+        self.suit: str = suit
+        self.name: str = self.__set_name()
+        self.face_value: int = CARD_FACE_VALUE_MAP[self.face]
 
     def __repr__(self):
         return str(self.face + self.suit)

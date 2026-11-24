@@ -14,14 +14,17 @@ class Dealer:
     def deal_starting_cards(self, players: Tuple[DummyPlayer, ...]) -> None:
         for _ in range(2):
             for player in players:
-                player.pocket.append(self.deck.cards.pop())
+                player.add_cards([self.deck.cards.pop()])
 
     def deal_flop(self, board: Board) -> None:
-        flop_cards = [self.deck.cards.pop() for _ in range(3)]
-        board.cards.extend(flop_cards)
+        board.add_flop_cards([self.deck.cards.pop() for _ in range(3)])
 
     def deal_turn_or_river(self, board) -> None:
-        board.cards.extend([self.deck.cards.pop()])
+        card = self.deck.cards.pop()
+        if len(board.cards) == 3:
+            board.add_turn_card(card)
+        else:
+            board.add_river_card(card)
 
     def reset(self):
         self.deck.reset()

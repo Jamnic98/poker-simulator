@@ -27,9 +27,17 @@ def test_add_flop():
     board.add_flop_cards(test_cards)
     assert len(board.cards) == 3
     assert board.cards == test_cards
-    # test adding too many cards
-    board.add_flop_cards(test_cards.copy() + [turn_card])
-    assert raises(ValueError)
+    # adding a second flop to a non-empty board raises
+    with raises(ValueError):
+        board.add_flop_cards(test_cards.copy())
+
+def test_add_flop_wrong_card_count_raises():
+    board = Board()
+    with raises(ValueError):
+        board.add_flop_cards(test_cards.copy() + [turn_card])
+    with raises(ValueError):
+        board.add_flop_cards([turn_card, river_card])
+    assert len(board.cards) == 0
 
 def test_add_turn():
     board = Board(test_cards.copy())
@@ -37,8 +45,22 @@ def test_add_turn():
     assert len(board.cards) == 4
     assert board.cards[3] == turn_card
 
+def test_add_turn_invalid_state_raises():
+    board = Board()
+    with raises(ValueError):
+        board.add_turn_card(turn_card)
+    board.add_flop_cards(test_cards.copy())
+    board.add_turn_card(turn_card)
+    with raises(ValueError):
+        board.add_turn_card(river_card)
+
 def test_add_river():
     board = Board(test_cards.copy() + [turn_card])
     board.add_river_card(river_card)
     assert len(board.cards) == 5
     assert board.cards[4] == river_card
+
+def test_add_river_invalid_state_raises():
+    board = Board(test_cards.copy())
+    with raises(ValueError):
+        board.add_river_card(river_card)
