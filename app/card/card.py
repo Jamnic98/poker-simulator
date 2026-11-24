@@ -6,6 +6,8 @@ from app.utils.constants import (
     FACES,
     SUITS
 )
+
+
 class Card:
     def __init__(self, token: str):
         if len(token) < 2:
@@ -17,7 +19,7 @@ class Card:
         self.face: str = face
         self.suit: str = suit
         self.name: str = self.__set_name()
-        self.face_value: int = CARD_FACE_VALUE_MAP.get(self.face)
+        self.face_value: int = CARD_FACE_VALUE_MAP[self.face]
 
     def __repr__(self):
         return str(self.face + self.suit)

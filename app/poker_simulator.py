@@ -112,12 +112,11 @@ class PokerSimulator:
             }
 
         for i, hand in enumerate(ranked_hands):
-            if i == 0 and isinstance(hand, Tuple):
+            if isinstance(hand, tuple):
                 for player_hand in hand:
-                    hand_results.append(create_result_entry(player_hand, won=True))
+                    hand_results.append(create_result_entry(player_hand, won=(i == 0)))
             else:
-                is_winning_hand = hand == ranked_hands[0]
-                hand_results.append(create_result_entry(hand, is_winning_hand))
+                hand_results.append(create_result_entry(hand, won=(i == 0)))
 
         df = DataFrame(hand_results)
         return df.astype({'main_suit': 'string', 'hand_type': 'string'})

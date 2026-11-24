@@ -12,37 +12,58 @@ def test_init():
     test_cards = example_hands.three_of_a_kind.cards
     hand = Hand(test_cards)
     assert hand.cards == test_cards
-    Hand([
-        Card('7H'),
-        Card('8H'),
-        Card('9H'),
-        Card('JH'),
-        Card('10H'),
-        Card('QH'),
-        Card('AH'),
-        Card('KH')]
-    )
-    assert raises(ValueError)
+    with raises(ValueError):
+        Hand([
+            Card('7H'),
+            Card('8H'),
+            Card('9H'),
+            Card('JH'),
+            Card('10H'),
+            Card('QH'),
+            Card('AH'),
+            Card('KH')]
+        )
 
 def test_init_with_duplicate_cards():
-    Hand([Card('AS'), Card('AS')])
-    assert raises(ValueError)
+    with raises(ValueError):
+        Hand([Card('AS'), Card('AS')])
 
 def test_add_cards():
     hand = Hand()
     hand.add_cards(example_hands.pair.cards)
     assert hand.cards == example_hands.pair.cards
-    hand.add_cards([
-        Card('7H'),
-        Card('8H'),
-        Card('9H'),
-        Card('JH'),
-        Card('10H'),
-        Card('QH'),
-        Card('AH'),
-        Card('KH')
-    ])
-    assert raises(ValueError)
+    with raises(ValueError):
+        hand.add_cards([
+            Card('7H'),
+            Card('8H'),
+            Card('9H'),
+            Card('JH'),
+            Card('10H'),
+            Card('QH'),
+            Card('AH'),
+            Card('KH')
+        ])
+
+def test_add_duplicate_card_raises():
+    hand = Hand([Card('AS'), Card('KD')])
+    with raises(ValueError):
+        hand.add_cards([Card('AS'), Card('2C'), Card('3D')])
+
+def test_flush_main_cards_are_top_five():
+    hand = Hand([Card(t) for t in ['2H', '4H', '6H', '8H', '10H', 'QH', '2D']])
+    assert hand.hand_type[0] == PokerHand.FLUSH
+    assert len(hand.hand_type[1]) == 5
+    assert [c.face for c in hand.hand_type[1]] == ['Q', '10', '8', '6', '4']
+
+def test_wheel_straight_strength_is_five_high():
+    wheel = Hand([Card(t) for t in ['AH', '2D', '3C', '4S', '5H']])
+    assert wheel.hand_type[0] == PokerHand.STRAIGHT
+    assert wheel.get_strength() == (PokerHand.STRAIGHT.value, (5, 4, 3, 2, 1), ())
+
+def test_get_strength_orders_categories():
+    high_card = Hand([Card(t) for t in ['2C', '3D', '5H', '9S', 'JC']])
+    pair = Hand([Card(t) for t in ['AC', 'AD', '5H', '9S', 'JC']])
+    assert pair.get_strength() > high_card.get_strength()
 
 def test_get_hand_type():
     hand = example_hands.royal_flush

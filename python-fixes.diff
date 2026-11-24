@@ -1,0 +1,374 @@
+diff --git a/app/board.py b/app/board.py
+index c96932a..c830387 100644
+--- a/app/board.py
++++ b/app/board.py
+@@ -1,7 +1,6 @@
+ from typing import List
+ 
+ from app.card import Card, CardHolder
+-from app.utils.logger_setup import logger
+ 
+ 
+ class Board(CardHolder):
+@@ -9,35 +8,21 @@ class Board(CardHolder):
+         super().__init__(cards)
+ 
+     def add_flop_cards(self, flop_cards: List[Card]) -> None:
+-        try:
+-            if len(flop_cards) != 3:
+-                raise ValueError('3 cards required for flop')
+-            if len(self.cards) != 0:
+-                raise ValueError('Invalid starting board state')
+-            self.add_cards(flop_cards)
+-
+-        except ValueError as e:
+-            logger.error(e)
++        if len(flop_cards) != 3:
++            raise ValueError('3 cards required for flop')
++        if len(self.cards) != 0:
++            raise ValueError('Invalid starting board state')
++        self.add_cards(flop_cards)
+ 
+     def add_turn_card(self, turn_card: Card) -> None:
+-        try:
+-            if board_card_count := len(self.cards) != 3:
+-                raise ValueError(f'Invalid board state of {board_card_count} cards')
+-            else:
+-                self.add_cards([turn_card])
+-
+-        except ValueError as e:
+-            logger.error(e)
++        if len(self.cards) != 3:
++            raise ValueError(f'Invalid board state of {len(self.cards)} cards')
++        self.add_cards([turn_card])
+ 
+     def add_river_card(self, river_card: Card) -> None:
+-        try:
+-            if board_card_count := len(self.cards) != 4:
+-                raise ValueError(f'Invalid board state of {board_card_count} cards')
+-            else:
+-                self.add_cards([river_card])
+-
+-        except ValueError as e:
+-            logger.error(e)
++        if len(self.cards) != 4:
++            raise ValueError(f'Invalid board state of {len(self.cards)} cards')
++        self.add_cards([river_card])
+ 
+     def reset(self):
+         self.cards.clear()
+diff --git a/app/card/card.py b/app/card/card.py
+index fa32992..db7f49f 100644
+--- a/app/card/card.py
++++ b/app/card/card.py
+@@ -6,22 +6,20 @@ from app.utils.constants import (
+     FACES,
+     SUITS
+ )
+-from app.utils.logger_setup import logger
+ 
+ 
+ class Card:
+     def __init__(self, token: str):
+-        try:
+-            face, suit = token[:-1], token[-1]
+-            if face not in FACES or suit not in SUITS:
+-                raise ValueError(f'Invalid token: {token}')
+-            self.token = token
+-            self.face: str = face
+-            self.suit: str = suit
+-            self.name: str = self.__set_name()
+-            self.face_value: int = CARD_FACE_VALUE_MAP.get(self.face)
+-        except (KeyError, ValueError) as e:
+-            logger.error(e)
++        if len(token) < 2:
++            raise ValueError(f'Invalid token: {token}')
++        face, suit = token[:-1], token[-1]
++        if face not in FACES or suit not in SUITS:
++            raise ValueError(f'Invalid token: {token}')
++        self.token = token
++        self.face: str = face
++        self.suit: str = suit
++        self.name: str = self.__set_name()
++        self.face_value: int = CARD_FACE_VALUE_MAP[self.face]
+ 
+     def __repr__(self):
+         return str(self.face + self.suit)
+diff --git a/app/dealer.py b/app/dealer.py
+index 4cedc62..d11b7c6 100644
+--- a/app/dealer.py
++++ b/app/dealer.py
+@@ -14,14 +14,17 @@ class Dealer:
+     def deal_starting_cards(self, players: Tuple[DummyPlayer, ...]) -> None:
+         for _ in range(2):
+             for player in players:
+-                player.pocket.append(self.deck.cards.pop())
++                player.add_cards([self.deck.cards.pop()])
+ 
+     def deal_flop(self, board: Board) -> None:
+-        flop_cards = [self.deck.cards.pop() for _ in range(3)]
+-        board.cards.extend(flop_cards)
++        board.add_flop_cards([self.deck.cards.pop() for _ in range(3)])
+ 
+     def deal_turn_or_river(self, board) -> None:
+-        board.cards.extend([self.deck.cards.pop()])
++        card = self.deck.cards.pop()
++        if len(board.cards) == 3:
++            board.add_turn_card(card)
++        else:
++            board.add_river_card(card)
+ 
+     def reset(self):
+         self.deck.reset()
+diff --git a/app/hand/hand.py b/app/hand/hand.py
+index 3fb87fc..940bbc5 100644
+--- a/app/hand/hand.py
++++ b/app/hand/hand.py
+@@ -1,7 +1,5 @@
+-import logging
+ from typing import List, Tuple
+ from app.card import Card, CardHolder
+-from app.utils.logger_setup import logger
+ from app.utils.enums import PokerHand
+ from app.utils.constants import CARD_FACE_VALUE_MAP
+ 
+@@ -10,14 +8,27 @@ class Hand(CardHolder):
+     def __init__(self, cards: List[Card]=None):
+         super().__init__(cards)
+         self.hand_type = None
+-        try:
+-            if len(self) > 7:
+-                raise ValueError
+-            if cards and len(set(cards)) != len(set(self.cards)):
+-                raise ValueError
+-            self.hand_type = self.get_hand_type()
+-        except ValueError as e:
+-            logging.error(f'Init hand failed: {e}')
++        if len(self) > 7:
++            raise ValueError('Hand cannot contain more than 7 cards')
++        if cards and len(set(cards)) != len(cards):
++            raise ValueError('Hand cannot contain duplicate cards')
++        self.hand_type = self.get_hand_type()
++
++    def get_strength(self) -> tuple:
++        """Numeric comparison key: (hand rank, main card values, kicker values).
++        Main/kicker values are sorted descending. For straights the ace counts
++        as 1 when it plays low (wheel straight A-2-3-4-5 -> (5, 4, 3, 2, 1))."""
++        if self.hand_type is None or self.hand_type[0] is None:
++            return (0, (), ())
++        category, main_cards, kickers, _ = self.hand_type
++
++        def values(cards) -> tuple:
++            return tuple(sorted((CARD_FACE_VALUE_MAP[c.face] for c in cards), reverse=True))
++
++        main_values = values(main_cards)
++        if category in (PokerHand.STRAIGHT, PokerHand.STRAIGHT_FLUSH) and set(main_values) == {14, 5, 4, 3, 2}:
++            main_values = (5, 4, 3, 2, 1)
++        return category.value, main_values, values(kickers)
+ 
+     def __makes_x_of_a_kind(self, x: int) -> bool:
+         """returns true if x number of occurrences of a card face in hand"""
+@@ -31,15 +42,13 @@ class Hand(CardHolder):
+         return False
+ 
+     def add_cards(self, cards: List[Card]) -> None:
+-        if (cards_len := len(cards)) > 0:
+-            try:
+-                if cards_len + len(self) > 7:
+-                    raise ValueError
+-                if len(set(cards)) != len(set(cards.copy() + self.cards)):
+-                    raise ValueError
+-                self.cards.extend(cards)
+-            except ValueError as e:
+-                logger.error(f'Error adding cards to hand {e}')
++        if len(cards) == 0:
++            return
++        if len(cards) + len(self) > 7:
++            raise ValueError('Hand cannot contain more than 7 cards')
++        if len(set(cards)) != len(set(list(cards) + self.cards)):
++            raise ValueError('Hand cannot contain duplicate cards')
++        self.cards.extend(cards)
+ 
+     def get_hand_type(self) -> (PokerHand, Tuple[Card], Tuple[Card], str or None):
+         """Returns a tuple: (PokerHand, <main_cards>, <kicker_cards>, <main_suit> if applicable)."""
+@@ -117,11 +126,11 @@ class Hand(CardHolder):
+             sorted_suited_cards = sorted(suited_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face], reverse=True)[:5]
+             return tuple(sorted_suited_cards), ()
+ 
+-        # Handle Flush (only when not part of a straight)
++        # Handle Flush (only when not part of a straight); only the best 5 cards count
+         if is_flush and not is_straight:
+             suited_cards = [card for card in self.cards if card.suit == main_suit]
+             sorted_suited_cards = sorted(suited_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face], reverse=True)
+-            return tuple(sorted_suited_cards), ()
++            return tuple(sorted_suited_cards[:5]), ()
+ 
+         # Handle Straight
+         if is_straight:
+@@ -141,12 +150,12 @@ class Hand(CardHolder):
+                     straight_cards = potential_straight
+                     break
+ 
+-            # Special case: Ace-low straight (A-2-3-4-5)
++            # Special case: Ace-low straight (A-2-3-4-5), ordered 5-high with the ace last
+             if not straight_cards and 'A' in [card.face for card in unique_faces] and '2' in [card.face for card in
+                                                                                               unique_faces]:
+                 ace = next(card for card in unique_faces if card.face == 'A')
+                 low_cards = [card for card in unique_faces if CARD_FACE_VALUE_MAP[card.face] <= 5 and card.face != 'A']
+-                straight_cards = [ace] + sorted(low_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face])
++                straight_cards = sorted(low_cards, key=lambda card: CARD_FACE_VALUE_MAP[card.face], reverse=True) + [ace]
+ 
+             if straight_cards:
+                 return tuple(straight_cards), ()
+@@ -169,24 +178,28 @@ class Hand(CardHolder):
+         for card in self.cards:
+             face_counts[card.face] = face_counts.get(card.face, 0) + 1
+ 
+-        # Identify the three-of-a-kind and pair
++        # Identify the three-of-a-kind and pair; with two sets in 7 cards the
++        # second set acts as the pair, so only exclude the chosen trips face
+         three_of_a_kind_faces = sorted(
+             [face for face, count in face_counts.items() if count >= 3],
+             key=lambda face: CARD_FACE_VALUE_MAP[face],
+             reverse=True
+         )
++
++        if not three_of_a_kind_faces:
++            return (), ()
++
++        # Select the strongest full house (highest three-of-a-kind, then highest pair)
++        three_of_a_kind_face = three_of_a_kind_faces[0]
+         pair_faces = sorted(
+-            [face for face, count in face_counts.items() if count >= 2 and face not in three_of_a_kind_faces],
++            [face for face, count in face_counts.items() if count >= 2 and face != three_of_a_kind_face],
+             key=lambda face: CARD_FACE_VALUE_MAP[face],
+             reverse=True
+         )
+ 
+-        # Ensure both three-of-a-kind and pair are present
+-        if not three_of_a_kind_faces or not pair_faces:
++        if not pair_faces:
+             return (), ()
+ 
+-        # Select the strongest full house (highest three-of-a-kind, then highest pair)
+-        three_of_a_kind_face = three_of_a_kind_faces[0]
+         pair_face = pair_faces[0]
+ 
+         # Get main cards (three-of-a-kind)
+diff --git a/app/hand/hand_evaluator.py b/app/hand/hand_evaluator.py
+index e4ef540..3416c89 100644
+--- a/app/hand/hand_evaluator.py
++++ b/app/hand/hand_evaluator.py
+@@ -1,52 +1,26 @@
+ from typing import List, Tuple, Union
+ from app.hand import Hand
+-from app.utils.enums import PokerHand
+ 
+ 
+ class HandEvaluator:
+     @staticmethod
+     def rank_hands(hands: Tuple[Hand, ...]) -> List[Union[Hand, Tuple[Hand, ...]]]:
+         """
+-        Ranks all players' hands from strongest to weakest. If multiple hands tie,
+-        they are grouped as a tuple in the result list.
++        Ranks all players' hands from strongest to weakest. Hands with equal
++        strength (a draw / split pot) are grouped as a tuple in the result list.
+         """
+-        ranked_hands = []
+-        hands_dict: dict[PokerHand, List[Hand]] = {}
++        ordered = sorted(hands, key=lambda h: h.get_strength(), reverse=True)
+ 
+-        # Group hands by their hand type
+-        for hand in hands:
+-            hands_dict.setdefault(hand.hand_type[0], []).append(hand)
++        groups: List[List[Hand]] = []
++        for hand in ordered:
++            if groups and HandEvaluator._is_tied(groups[-1][0], hand):
++                groups[-1].append(hand)
++            else:
++                groups.append([hand])
+ 
+-        # Rank hand types by poker hierarchy
+-        for ph in reversed(PokerHand):
+-            if ph in hands_dict:
+-                # Sort hands within this type by main cards and kickers
+-                hands_dict[ph].sort(
+-                    key=lambda h: (
+-                        sorted(h.hand_type[1], reverse=True),  # Main cards
+-                        sorted(h.hand_type[2], reverse=True)   # Kickers
+-                    ),
+-                    reverse=True
+-                )
+-
+-                # Group tied hands
+-                grouped_hands = []
+-                for idx, hand in enumerate(hands_dict[ph]):
+-                    if idx > 0 and HandEvaluator._is_tied(hands_dict[ph][idx - 1], hand):
+-                        grouped_hands[-1].append(hand)
+-                    else:
+-                        grouped_hands.append([hand])
+-
+-                # Flatten groups of tied hands into tuples or single entries
+-                for group in grouped_hands:
+-                    if len(group) > 1:
+-                        ranked_hands.append(tuple(group))
+-                    else:
+-                        ranked_hands.append(group[0])
+-
+-        return ranked_hands
++        return [tuple(group) if len(group) > 1 else group[0] for group in groups]
+ 
+     @staticmethod
+     def _is_tied(hand1: Hand, hand2: Hand) -> bool:
+-        """Checks if two hands are tied."""
+-        return hand1.hand_type[1] == hand2.hand_type[1] and hand1.hand_type[2]
++        """Checks if two hands are tied (same category, main cards and kickers)."""
++        return hand1.get_strength() == hand2.get_strength()
+diff --git a/app/player.py b/app/player.py
+index 76f8dd1..8f37441 100644
+--- a/app/player.py
++++ b/app/player.py
+@@ -1,7 +1,6 @@
+ from typing import List
+ 
+ from app.card import Card
+-from app.utils.logger_setup import logger
+ 
+ 
+ class DummyPlayer:
+@@ -9,12 +8,9 @@ class DummyPlayer:
+         self.pocket = cards or []
+ 
+     def add_cards(self, cards: List[Card]):
+-        try:
+-            if len(cards) + len(self.pocket) > 2:
+-                raise ValueError(f'Unable to add cards {cards}')
+-            self.pocket.extend(cards)
+-        except ValueError as e:
+-            logger.error(e)
++        if len(cards) + len(self.pocket) > 2:
++            raise ValueError(f'Unable to add cards {cards}')
++        self.pocket.extend(cards)
+ 
+     def reset(self):
+         self.pocket.clear()
+diff --git a/app/poker_simulator.py b/app/poker_simulator.py
+index 69022de..da04d11 100644
+--- a/app/poker_simulator.py
++++ b/app/poker_simulator.py
+@@ -112,12 +112,11 @@ class PokerSimulator:
+             }
+ 
+         for i, hand in enumerate(ranked_hands):
+-            if i == 0 and isinstance(hand, Tuple):
++            if isinstance(hand, tuple):
+                 for player_hand in hand:
+-                    hand_results.append(create_result_entry(player_hand, won=True))
++                    hand_results.append(create_result_entry(player_hand, won=(i == 0)))
+             else:
+-                is_winning_hand = hand == ranked_hands[0]
+-                hand_results.append(create_result_entry(hand, is_winning_hand))
++                hand_results.append(create_result_entry(hand, won=(i == 0)))
+ 
+         df = DataFrame(hand_results)
+         return df.astype({'main_suit': 'string', 'hand_type': 'string'})
