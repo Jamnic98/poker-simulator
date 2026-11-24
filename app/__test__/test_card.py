@@ -30,5 +30,5 @@ def test_card():
     assert card.suit == 'D'
     assert card.face_value == 3
 
-    Card('FU')
-    assert raises(ValueError)
+    with raises(ValueError):
+        Card('FU')
